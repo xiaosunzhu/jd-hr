@@ -1,0 +1,1 @@
+python punch-setup.py py2exe

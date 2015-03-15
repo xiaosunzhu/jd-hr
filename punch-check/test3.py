@@ -1,0 +1,257 @@
+# coding=utf-8
+
+import ConfigParser
+import sys
+from datetime import date, time
+
+import xlrd
+
+from sheet_read_write import read_str_cell, read_cell_type, read_int_cell, read_date_cells, read_time_cells, \
+    write_by_date_sheet_row, write_final_sheet_row, outputData, write_no_plan_sheet_row, MSG_NOT_PUNCH_IN, \
+    MSG_PUNCH_IN_LATE, MSG_NOT_PUNCH_OUT, MSG_PUNCH_OUT_EARLY, MSG_NOT_PUNCH
+from work_def import Person, WorkDay, Punch, get_date_time, PlanType, FLOAT_TYPE, is_same_time_punch
+
+
+__author__ = 'yijun.sun'
+
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+SYSTEM_ENCODING = 'GBK'
+year = 2015
+month = 2
+
+
+def encode_str(string):
+    return string.encode(SYSTEM_ENCODING)
+
+
+PLAN_DEPARTMENT_MAP = {}
+
+try:
+    tableConfig = ConfigParser.ConfigParser()
+    with open(encode_str('resources\\表格配置.ini'), 'r') as cfg_file:
+        tableConfig.readfp(cfg_file)
+    planTableNameCol = int(tableConfig.get(encode_str('排班表'), encode_str('姓名列'))) - 1
+    planTableNameStartRow = int(tableConfig.get(encode_str('排班表'), encode_str('姓名起始行'))) - 1
+    planTableDepartmentCol = int(tableConfig.get(encode_str('排班表'), encode_str('部门列'))) - 1
+    planTableDateRow = int(tableConfig.get(encode_str('排班表'), encode_str('日期行'))) - 1
+    planTableDateStartCol = int(tableConfig.get(encode_str('排班表'), encode_str('日期起始列'))) - 1
+
+    planCodeConfig = ConfigParser.ConfigParser()
+    with open(encode_str('resources\\排班代码配置.ini'), 'r') as cfg_file:
+        planCodeConfig.readfp(cfg_file)
+    for department in planCodeConfig.sections():
+        departmentDecode = department.decode('GBK').encode('utf-8')
+        PLAN_DEPARTMENT_MAP[departmentDecode] = {}
+        departmentConfig = planCodeConfig.items(department)
+        for planCode in departmentConfig:
+            planCodeString = planCode[0].upper()
+            timeStrings = planCode[1].split('-')
+            beginString = timeStrings[0]
+            if beginString == '':
+                continue
+            endString = timeStrings[len(timeStrings) - 1]
+            beginHour = int(beginString.split(':')[0])
+            if beginHour == 24:
+                beginHour = 0
+            beginTime = time(beginHour, int(beginString.split(':')[1]))
+            endHour = int(endString.split(':')[0])
+            if endHour == 24:
+                endHour = 0
+            endTime = time(endHour, int(endString.split(':')[1]))
+            acrossDay = False
+            if beginTime >= endTime:
+                acrossDay = True
+            PLAN_DEPARTMENT_MAP[departmentDecode][planCode[0].upper()] = PlanType(planCodeString,
+                                                                                  beginTime,
+                                                                                  endTime,
+                                                                                  acrossDay)
+
+
+    # planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
+    # punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
+
+    planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
+    punchFilePath = encode_str('resources\\打卡记录.xls')
+
+    startDateNum = 1
+    endDateNum = 1
+
+    planData = xlrd.open_workbook(planFilePath)
+    planSheet = planData.sheets()[0]
+    personMap = {}
+    for row in range(planTableNameStartRow, planSheet.nrows):
+        name = read_str_cell(planSheet, row, planTableNameCol)
+        department = read_str_cell(planSheet, row, planTableDepartmentCol).strip()
+        planTimeMap = PLAN_DEPARTMENT_MAP.get(department)
+        if not planTimeMap:
+            continue
+        if name.strip() == '':
+            continue
+        if name not in personMap.keys():
+            personMap[name] = Person(name, department)
+        colNum = planTableDateStartCol
+        while read_cell_type(planSheet, planTableDateRow, colNum) is FLOAT_TYPE:
+            dateTemp = read_int_cell(planSheet, planTableDateRow, colNum)
+            if dateTemp > endDateNum:
+                endDateNum = dateTemp
+            planType = read_str_cell(planSheet, row, colNum)
+            if planType.strip() == '':
+                colNum += 1
+                continue
+            planWork = planTimeMap.get(planType)
+            if not planWork or not planWork.needWork:
+                colNum += 1
+                continue
+            workPlan = WorkDay(date(year, month, dateTemp), planTimeMap[planType])
+            personMap[name].add_work_day(workPlan)
+            colNum += 1
+
+    punchData = xlrd.open_workbook(punchFilePath)
+    punchSheet = punchData.sheets()[0]
+    nameColIndex = 1
+    departmentColIndex = 0
+    dateColIndex = 3
+    timeColIndex = 4
+    punchTypeIndex = 5
+    nameStartRow = 1
+
+    noPlanOutputRow = 1
+    processedNoPlanName = []
+    for row in range(nameStartRow, punchSheet.nrows):
+        name = read_str_cell(punchSheet, row, nameColIndex)
+        splits = name.split(' ')
+        name = splits[len(splits) - 1]
+        if name not in personMap.keys():
+            if name not in processedNoPlanName:
+                noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, name,
+                                                          read_str_cell(punchSheet, row,
+                                                                        departmentColIndex))
+                processedNoPlanName.append(name)
+            continue
+        person = personMap[name]
+        currentDate = read_date_cells(punchSheet, punchData.datemode, row, dateColIndex)
+        currentTime = read_time_cells(punchSheet, punchData.datemode, row, timeColIndex)
+        person.add_punch(
+            Punch(read_str_cell(punchSheet, row, punchTypeIndex),
+                  get_date_time(currentDate, currentTime)))
+
+    for person in personMap.values():
+        indexOfPunch = 0
+        finishPersonPunchCheck = False
+        for dateNum in range(startDateNum, endDateNum + 1):
+            currentDate = date(year, month, dateNum)
+            work = person.workDays.get(currentDate)
+            if not work:
+                continue
+            if indexOfPunch >= len(person.punches):
+                break
+            while work.is_before_work_uncertain_time(person.punches[indexOfPunch]):
+                indexOfPunch += 1
+                if indexOfPunch >= len(person.punches):
+                    break
+            if indexOfPunch >= len(person.punches):
+                break
+            while work.is_before_work_valid_time(person.punches[indexOfPunch]):
+                work.uncertain_punch_in(person.punches[indexOfPunch])
+                person.punches[indexOfPunch].processed = True
+                indexOfPunch += 1
+                if indexOfPunch >= len(person.punches):
+                    break
+            if indexOfPunch >= len(person.punches):
+                break
+            while not work.is_after_work_valid_time(person.punches[indexOfPunch]):
+                work.punch(person.punches[indexOfPunch])
+                person.punches[indexOfPunch].processed = True
+                indexOfPunch += 1
+                if indexOfPunch >= len(person.punches):
+                    break
+            uncertainCount = 0
+            if indexOfPunch >= len(person.punches):
+                break
+            while not work.is_after_work_uncertain_time(person.punches[indexOfPunch]):
+                work.uncertain_punch_out(person.punches[indexOfPunch])
+                person.punches[indexOfPunch].processed = True
+                uncertainCount += 1
+                indexOfPunch += 1
+                if indexOfPunch >= len(person.punches):
+                    break
+            indexOfPunch -= uncertainCount
+
+    nameSorted = sorted(personMap.keys())
+    finalOutputRow = 1
+    byDateOutputRow = 1
+    detailsOutputRow = 0
+
+    for name in nameSorted:
+        person = personMap[name]
+        for dateNum in range(startDateNum, endDateNum + 1):
+            currentDate = date(year, month, dateNum)
+            work = person.workDays.get(currentDate)
+            nextDayWork = None
+            if dateNum != endDateNum:
+                nextDayWork = person.workDays.get(currentDate)
+            if not work:
+                continue
+            workDate = work.get_work_date()
+            planType = work.get_plan_type()
+
+            # 补充确定先前不确定的打卡记录
+            if not work.have_punch_in() and work.uncertainPunchInList:
+                work.punch(work.uncertainPunchInList[0])
+            if not work.have_punch_out() and len(work.uncertainPunchOutList) > 0:
+                uncertainPunchOutFirst = work.uncertainPunchOutList[0]
+                uncertainPunchOutLast = work.uncertainPunchOutList[
+                    len(work.uncertainPunchOutList) - 1]
+                if not nextDayWork:
+                    work.punch(uncertainPunchOutLast)
+                elif nextDayWork.have_punch_in() or \
+                                (
+                                    uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds >= \
+                                (
+                                    uncertainPunchOutLast.punchDatetime - nextDayWork.get_plan_begin_datetime()).seconds:
+                    uncertainPunchOut = uncertainPunchOutFirst
+                    for punchIn in work.uncertainPunchOutList:
+                        if is_same_time_punch(uncertainPunchOut, punchIn):
+                            uncertainPunchOut = punchIn
+                        else:
+                            break
+                    work.punch(uncertainPunchOut)
+                    nextDayWork.remove_processed_uncertain_punch_in(uncertainPunchOut.punchDatetime)
+                # 补充确定先前不确定的打卡记录
+
+            exceptionMsg = ''
+            if not work.have_punch_in():
+                exceptionMsg += MSG_NOT_PUNCH_IN + ' / '
+                finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
+                                                       person.department,
+                                                       work.get_plan_begin_datetime(),
+                                                       work.get_plan_begin_datetime(),
+                                                       MSG_NOT_PUNCH, byDateOutputRow)
+            elif work.is_punch_in_late():
+                exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
+            if not work.have_punch_out():
+                exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
+                finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
+                                                       person.department,
+                                                       work.get_plan_end_datetime(),
+                                                       work.get_plan_end_datetime(),
+                                                       MSG_NOT_PUNCH, byDateOutputRow)
+            elif work.is_punch_out_early():
+                exceptionMsg += MSG_PUNCH_OUT_EARLY + ' / '
+            if work.have_punch_in() and not work.is_punch_in_late() and work.have_punch_out() and not work.is_punch_out_early():
+                pass
+            if exceptionMsg:
+                exceptionMsg = exceptionMsg[:len(exceptionMsg) - 3]
+            byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.name,
+                                                      workDate, work.get_punch_in_datetime(),
+                                                      work.get_punch_out_datetime(), planType,
+                                                      exceptionMsg, 0)
+    outputData.save(encode_str('out\\排班打卡比对.xls'))
+    print(encode_str('处理完毕'))
+except Exception as e:
+    print(encode_str('程序异常'))
+    raise
+finally:
+    raw_input(encode_str('键入回车退出程序'))
