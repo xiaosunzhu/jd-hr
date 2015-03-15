@@ -85,12 +85,14 @@ try:
         name = read_str_cell(planSheet, row, planTableNameCol)
         department = read_str_cell(planSheet, row, planTableDepartmentCol).strip()
         planTimeMap = PLAN_DEPARTMENT_MAP.get(department)
-        if not planTimeMap:
+        if planTimeMap is None:
             continue
         if name.strip() == '':
             continue
         if name not in personMap.keys():
             personMap[name] = Person(name, department)
+        if not planTimeMap:
+            continue
         colNum = planTableDateStartCol
         while read_cell_type(planSheet, planTableDateRow, colNum) is FLOAT_TYPE:
             dateTemp = read_int_cell(planSheet, planTableDateRow, colNum)
@@ -127,7 +129,7 @@ try:
             if name not in processedNoPlanName:
                 noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, name,
                                                           read_str_cell(punchSheet, row,
-                                                                        departmentColIndex))
+                                                                        departmentColIndex), 0)
                 processedNoPlanName.append(name)
             continue
         person = personMap[name]
@@ -228,7 +230,7 @@ try:
                                                        person.department,
                                                        work.get_plan_begin_datetime(),
                                                        work.get_plan_begin_datetime(),
-                                                       MSG_NOT_PUNCH, byDateOutputRow)
+                                                       MSG_NOT_PUNCH, byDateOutputRow + 1)
             elif work.is_punch_in_late():
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
             if dateNum != endDateNum and not work.have_punch_out():
@@ -237,7 +239,7 @@ try:
                                                        person.department,
                                                        work.get_plan_end_datetime(),
                                                        work.get_plan_end_datetime(),
-                                                       MSG_NOT_PUNCH, byDateOutputRow)
+                                                       MSG_NOT_PUNCH, byDateOutputRow + 1)
             elif work.is_punch_out_early():
                 exceptionMsg += MSG_PUNCH_OUT_EARLY + ' / '
             if work.have_punch_in() and not work.is_punch_in_late() and work.have_punch_out() and not work.is_punch_out_early():
