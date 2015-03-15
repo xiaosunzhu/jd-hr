@@ -58,17 +58,20 @@ MAGENTA_BG_PATTERN.pattern = xlwt.Pattern.SOLID_PATTERN
 MAGENTA_BG_PATTERN.pattern_fore_colour = 6  # May be: 8 through 63. 0 = Black, 1 = White, 2 = Red, 3 = Green, 4 = Blue, 5 = Yellow, 6 = Magenta, 7 = Cyan, 16 = Maroon, 17 = Dark Green, 18 = Dark Blue, 19 = Dark Yellow , almost brown), 20 = Dark Magenta, 21 = Teal, 22 = Light Gray, 23 = Dark Gray, the list goes on...
 
 
-def write_details_sheet_row(row, name, department, punch_datetime, punch_type, link_exception_sheet_row):
+def write_details_sheet_row(row, name, department, punch_datetime, punch_type,
+                            link_exception_sheet_row):
     outputDetailsSheet.write(row, 0, name)
     outputDetailsSheet.write(row, 1, department)
     outputDetailsSheet.write(row, 2, xlwt.Formula(
-        'HYPERLINK("#timeInfo!A' + str(link_exception_sheet_row) + '","' + str(punch_datetime)[0:10] + '")'))
+        'HYPERLINK("#timeInfo!A' + str(link_exception_sheet_row) + '","' + str(punch_datetime)[
+                                                                           0:10] + '")'))
     outputDetailsSheet.write(row, 3, punch_datetime.strftime('%H:%M:%S'))
     outputDetailsSheet.write(row, 4, punch_type)
     return row + 1
 
 
-def write_by_date_sheet_row(row, name, date, punch_in_datetime, punch_out_datetime, plan, msg, link_details_sheet_row):
+def write_by_date_sheet_row(row, name, date, punch_in_datetime, punch_out_datetime, plan, msg,
+                            link_details_sheet_row):
     style = Style.default_style
     origin_pattern = style.pattern
     if msg:
@@ -89,8 +92,11 @@ def write_by_date_sheet_row(row, name, date, punch_in_datetime, punch_out_dateti
     else:
         outputByDateSheet.write(row, 3, '')
     style.num_format_str = 'h:mm'
+    rowNum = str(row + 1)
     outputByDateSheet.write(row, 4, xlwt.Formula(
-        'IF(D' + str(row + 1) + '*C' + str(row + 1) + ',D' + str(row + 1) + '-C' + str(row + 1) + ',"")'))
+        #IF(D?*C?,IF(D?<C?,D?+"24:00:00",D?)-C?),"")
+        'IF(D' + rowNum + '*C' + rowNum + ',IF(D' + rowNum + '<C' + rowNum + ',D' + rowNum +
+        '+"24:00:00",D' + rowNum + ')-C' + str(row + 1) + ',"")'))
     style.num_format_str = 'General'
     outputByDateSheet.write(row, 5, str(plan), style)
     style.pattern = origin_pattern
