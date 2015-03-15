@@ -208,9 +208,9 @@ try:
                     work.punch(uncertainPunchOutLast)
                 elif nextDayWork.have_punch_in() or \
                                 (
-                                    uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds >= \
+                                        uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds >= \
                                 (
-                                    uncertainPunchOutLast.punchDatetime - nextDayWork.get_plan_begin_datetime()).seconds:
+                                        uncertainPunchOutLast.punchDatetime - nextDayWork.get_plan_begin_datetime()).seconds:
                     uncertainPunchOut = uncertainPunchOutFirst
                     for punchIn in work.uncertainPunchOutList:
                         if is_same_time_punch(uncertainPunchOut, punchIn):
@@ -219,7 +219,7 @@ try:
                             break
                     work.punch(uncertainPunchOut)
                     nextDayWork.remove_processed_uncertain_punch_in(uncertainPunchOut.punchDatetime)
-                # 补充确定先前不确定的打卡记录
+                    # 补充确定先前不确定的打卡记录
 
             exceptionMsg = ''
             if not work.have_punch_in():
@@ -231,7 +231,7 @@ try:
                                                        MSG_NOT_PUNCH, byDateOutputRow)
             elif work.is_punch_in_late():
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
-            if not work.have_punch_out():
+            if dateNum != endDateNum and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                        person.department,
