@@ -224,7 +224,7 @@ class Punch(object):
     def __init__(self, punch_type, punch_datetime):
         self.punchType = punch_type
         self.punchDatetime = punch_datetime
-        self.processed = False
+        self.outputToDetails = False
 
 
 def is_same_time_punch(punch1, punch2):

@@ -94,6 +94,10 @@ def write_by_date_sheet_row(row, name, date, punch_in_datetime, punch_out_dateti
         else:
             style.pattern = YELLOW_BG_PATTERN
         outputByDateSheet.write(row, 6, msg)
+        style.font = LINK_FONT
+        outputByDateSheet.write(row, 7, xlwt.Formula(
+            'HYPERLINK("#Details!A' + str(link_details_sheet_row) + '","Details...")'))
+        style.font = origin_font
     outputByDateSheet.write(row, 0, name)
     outputByDateSheet.write(row, 1, str(date))
     if punch_in_datetime:
@@ -112,10 +116,6 @@ def write_by_date_sheet_row(row, name, date, punch_in_datetime, punch_out_dateti
         '+"24:00:00",D' + rowNum + ')-C' + str(row + 1) + ',"")'))
     style.num_format_str = 'General'
     outputByDateSheet.write(row, 5, str(plan), style)
-    style.font = LINK_FONT
-    outputByDateSheet.write(row, 7, xlwt.Formula(
-        'HYPERLINK("#Details!A' + str(link_details_sheet_row) + '","Details...")'))
-    style.font = origin_font
     style.pattern = origin_pattern
     return row + 1
 

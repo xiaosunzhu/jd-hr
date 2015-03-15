@@ -7,8 +7,8 @@ from datetime import date, time
 import xlrd
 
 from sheet_read_write import read_str_cell, read_cell_type, read_int_cell, read_date_cells, read_time_cells, \
-    write_by_date_sheet_row, write_final_sheet_row, outputData, write_no_plan_sheet_row, MSG_NOT_PUNCH_IN, \
-    MSG_PUNCH_IN_LATE, MSG_NOT_PUNCH_OUT, MSG_PUNCH_OUT_EARLY, MSG_NOT_PUNCH
+    write_by_date_sheet_row, write_final_sheet_row, write_details_sheet_row, outputData, write_no_plan_sheet_row, \
+    MSG_NOT_PUNCH_IN, MSG_PUNCH_IN_LATE, MSG_NOT_PUNCH_OUT, MSG_PUNCH_OUT_EARLY, MSG_NOT_PUNCH
 from work_def import Person, WorkDay, Punch, get_date_time, PlanType, FLOAT_TYPE, is_same_time_punch
 
 
@@ -119,25 +119,30 @@ try:
     punchTypeIndex = 5
     nameStartRow = 1
 
+    detailsOutputRow = 1
+
     noPlanOutputRow = 1
-    processedNoPlanName = []
+    processedNoPlanName = {}
     for row in range(nameStartRow, punchSheet.nrows):
         name = read_str_cell(punchSheet, row, nameColIndex)
         splits = name.split(' ')
         name = splits[len(splits) - 1]
-        if name not in personMap.keys():
-            if name not in processedNoPlanName:
-                noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, name,
-                                                          read_str_cell(punchSheet, row,
-                                                                        departmentColIndex), 0)
-                processedNoPlanName.append(name)
-            continue
-        person = personMap[name]
+        department = read_str_cell(punchSheet, row, departmentColIndex)
         currentDate = read_date_cells(punchSheet, punchData.datemode, row, dateColIndex)
         currentTime = read_time_cells(punchSheet, punchData.datemode, row, timeColIndex)
-        person.add_punch(
-            Punch(read_str_cell(punchSheet, row, punchTypeIndex),
-                  get_date_time(currentDate, currentTime)))
+        punchDatetime = get_date_time(currentDate, currentTime)
+        punchType = read_str_cell(punchSheet, row, punchTypeIndex)
+        if name not in personMap.keys():
+            if name not in processedNoPlanName.keys():
+                noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, name,
+                                                          department, detailsOutputRow + 1)
+                processedNoPlanName[name] = noPlanOutputRow
+            detailsOutputRow = write_details_sheet_row(detailsOutputRow, name, department,
+                                                       punchDatetime, punchType,
+                                                       processedNoPlanName[name], noPlanSheet=True)
+            continue
+        person = personMap[name]
+        person.add_punch(Punch(punchType, punchDatetime))
 
     for person in personMap.values():
         indexOfPunch = 0
@@ -184,10 +189,11 @@ try:
     nameSorted = sorted(personMap.keys())
     finalOutputRow = 1
     byDateOutputRow = 1
-    detailsOutputRow = 0
 
     for name in nameSorted:
         person = personMap[name]
+        if name == '吴文晋':
+            print name
         for dateNum in range(startDateNum, endDateNum + 1):
             currentDate = date(year, month, dateNum)
             work = person.workDays.get(currentDate)
@@ -244,12 +250,29 @@ try:
                 exceptionMsg += MSG_PUNCH_OUT_EARLY + ' / '
             if work.have_punch_in() and not work.is_punch_in_late() and work.have_punch_out() and not work.is_punch_out_early():
                 pass
+            detailsStartRow = detailsOutputRow + 1
+            detailsLocateRow = None
             if exceptionMsg:
                 exceptionMsg = exceptionMsg[:len(exceptionMsg) - 3]
+                for punch in person.punches:
+                    if not punch.outputToDetails and (punch.punchDatetime.day == dateNum - 1 or
+                                                              punch.punchDatetime.day == dateNum or punch.punchDatetime.day == dateNum + 1):
+                        if not detailsLocateRow and punch.punchDatetime.day == dateNum:
+                            detailsLocateRow = detailsOutputRow + 1
+                        if not detailsLocateRow and punch.punchDatetime.day == dateNum + 1:
+                            detailsLocateRow = detailsOutputRow
+                        detailsOutputRow = write_details_sheet_row(detailsOutputRow, person.name,
+                                                                   person.department,
+                                                                   punch.punchDatetime,
+                                                                   punch.punchType,
+                                                                   byDateOutputRow + 1,
+                                                                   timeInfoSheet=True)
+            if not detailsLocateRow:
+                detailsLocateRow = detailsStartRow
             byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.name,
                                                       workDate, work.get_punch_in_datetime(),
                                                       work.get_punch_out_datetime(), planType,
-                                                      exceptionMsg, 0)
+                                                      exceptionMsg, detailsLocateRow)
     outputData.save(encode_str('out\\排班打卡比对.xls'))
     print(encode_str('处理完毕'))
 except Exception as e:
