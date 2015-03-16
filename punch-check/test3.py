@@ -32,60 +32,74 @@ try:
     tableConfig = ConfigParser.ConfigParser()
     with open(encode_str('resources\\表格配置.ini'), 'r') as cfg_file:
         tableConfig.readfp(cfg_file)
-    planTableNameCol = int(tableConfig.get(encode_str('排班表'), encode_str('姓名列')).strip()) - 1
-    planTableNameStartRow = int(tableConfig.get(encode_str('排班表'), encode_str('姓名起始行')).strip()) - 1
-    planTableDepartmentCol = int(tableConfig.get(encode_str('排班表'), encode_str('部门列')).strip()) - 1
-    planTableDateRow = int(tableConfig.get(encode_str('排班表'), encode_str('日期行')).strip()) - 1
-    planTableDateStartCol = int(tableConfig.get(encode_str('排班表'), encode_str('日期起始列')).strip()) - 1
-    punchDepartmentCol = int(tableConfig.get(encode_str('打卡表'), encode_str('部门列')).strip()) - 1
-    punchTableNameCol = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名列')).strip()) - 1
-    punchDateCol = int(tableConfig.get(encode_str('打卡表'), encode_str('日期列')).strip()) - 1
-    punchTimeCol = int(tableConfig.get(encode_str('打卡表'), encode_str('时间列')).strip()) - 1
-    punchTypeCol = int(tableConfig.get(encode_str('打卡表'), encode_str('类型列')).strip()) - 1
-    punchNameStartRow = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名起始行')).strip()) - 1
+    try:
+        planTableNameCol = int(tableConfig.get(encode_str('排班表'), encode_str('姓名列')).strip()) - 1
+        planTableNameStartRow = int(tableConfig.get(encode_str('排班表'), encode_str('姓名起始行')).strip()) - 1
+        planTableDepartmentCol = int(tableConfig.get(encode_str('排班表'), encode_str('部门列')).strip()) - 1
+        planTableDateRow = int(tableConfig.get(encode_str('排班表'), encode_str('日期行')).strip()) - 1
+        planTableDateStartCol = int(tableConfig.get(encode_str('排班表'), encode_str('日期起始列')).strip()) - 1
+        planSheetIndex = int(tableConfig.get(encode_str('排班表'), encode_str('Sheet')).strip()) - 1
+        punchDepartmentCol = int(tableConfig.get(encode_str('打卡表'), encode_str('部门列')).strip()) - 1
+        punchTableNameCol = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名列')).strip()) - 1
+        punchDateCol = int(tableConfig.get(encode_str('打卡表'), encode_str('日期列')).strip()) - 1
+        punchTimeCol = int(tableConfig.get(encode_str('打卡表'), encode_str('时间列')).strip()) - 1
+        punchTypeCol = int(tableConfig.get(encode_str('打卡表'), encode_str('类型列')).strip()) - 1
+        punchNameStartRow = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名起始行')).strip()) - 1
+        punchSheetIndex = int(tableConfig.get(encode_str('打卡表'), encode_str('Sheet')).strip()) - 1
+    except Exception, e:
+        print(encode_str('表格配置 格式非法！'))
+        raise
 
-    planCodeConfig = ConfigParser.ConfigParser()
-    with open(encode_str('resources\\排班代码配置.ini'), 'r') as cfg_file:
-        planCodeConfig.readfp(cfg_file)
-    for department in planCodeConfig.sections():
-        departmentDecode = department.decode('GBK').encode('utf-8')
-        PLAN_DEPARTMENT_MAP[departmentDecode] = {}
-        departmentConfig = planCodeConfig.items(department)
-        for planCode in departmentConfig:
-            planCodeString = planCode[0].upper()
-            timeStrings = planCode[1].split('-')
-            beginString = timeStrings[0]
-            if beginString == '':
-                continue
-            endString = timeStrings[len(timeStrings) - 1]
-            beginHour = int(beginString.split(':')[0])
-            if beginHour == 24:
-                beginHour = 0
-            beginTime = time(beginHour, int(beginString.split(':')[1]))
-            endHour = int(endString.split(':')[0])
-            if endHour == 24:
-                endHour = 0
-            endTime = time(endHour, int(endString.split(':')[1]))
-            acrossDay = False
-            if beginTime >= endTime:
-                acrossDay = True
-            PLAN_DEPARTMENT_MAP[departmentDecode][planCode[0].upper()] = PlanType(planCodeString,
-                                                                                  beginTime,
-                                                                                  endTime,
-                                                                                  acrossDay)
-
+    try:
+        planCodeConfig = ConfigParser.ConfigParser()
+        with open(encode_str('resources\\排班代码配置.ini'), 'r') as cfg_file:
+            planCodeConfig.readfp(cfg_file)
+        for department in planCodeConfig.sections():
+            departmentDecode = department.decode('GBK').encode('utf-8')
+            PLAN_DEPARTMENT_MAP[departmentDecode] = {}
+            departmentConfig = planCodeConfig.items(department)
+            for planCode in departmentConfig:
+                planCodeString = planCode[0].upper()
+                timeStrings = planCode[1].split('-')
+                beginString = timeStrings[0]
+                if beginString == '':
+                    continue
+                endString = timeStrings[len(timeStrings) - 1]
+                beginHour = int(beginString.split(':')[0])
+                if beginHour == 24:
+                    beginHour = 0
+                beginTime = time(beginHour, int(beginString.split(':')[1]))
+                endHour = int(endString.split(':')[0])
+                if endHour == 24:
+                    endHour = 0
+                endTime = time(endHour, int(endString.split(':')[1]))
+                acrossDay = False
+                if beginTime >= endTime:
+                    acrossDay = True
+                PLAN_DEPARTMENT_MAP[departmentDecode][planCode[0].upper()] = PlanType(planCodeString,
+                                                                                      beginTime,
+                                                                                      endTime,
+                                                                                      acrossDay)
+    except Exception, e:
+        print(encode_str('排班代码配置 格式非法！'))
+        raise
 
     # planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
     # punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
 
     planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
     punchFilePath = encode_str('resources\\打卡记录.xls')
-
     startDateNum = 1
     endDateNum = 1
-
-    planData = xlrd.open_workbook(planFilePath)
-    planSheet = planData.sheets()[0]
+    try:
+        planData = xlrd.open_workbook(planFilePath)
+    except IOError, e:
+        print(encode_str('无法打开排班表！\n文件路径：') + planFilePath)
+        raise
+    except xlrd.XLRDError, e:
+        print(encode_str('排班表是已损坏的excel文件！\n文件路径：') + planFilePath)
+        raise
+    planSheet = planData.sheets()[planSheetIndex]
     personMap = {}
     for row in range(planTableNameStartRow, planSheet.nrows):
         name = read_str_cell(planSheet, row, planTableNameCol)
@@ -116,12 +130,18 @@ try:
             personMap[name].add_work_day(workPlan)
             colNum += 1
 
-    punchData = xlrd.open_workbook(punchFilePath)
-    punchSheet = punchData.sheets()[0]
-
     detailsOutputRow = 1
-
     noPlanOutputRow = 1
+
+    try:
+        punchData = xlrd.open_workbook(punchFilePath)
+    except IOError, e:
+        print(encode_str('无法打开打卡表！\n文件路径：') + punchFilePath)
+        raise
+    except xlrd.XLRDError, e:
+        print(encode_str('打卡表是已损坏的excel文件！\n文件路径：') + punchFilePath)
+        raise
+    punchSheet = punchData.sheets()[punchSheetIndex]
     processedNoPlanName = {}
     for row in range(punchNameStartRow, punchSheet.nrows):
         name = read_str_cell(punchSheet, row, punchTableNameCol)
@@ -272,10 +292,13 @@ try:
                                                       workDate, work.get_punch_in_datetime(),
                                                       work.get_punch_out_datetime(), planType,
                                                       exceptionMsg, detailsLocateRow)
-    outputData.save(encode_str('out\\排班打卡比对.xls'))
-    print(encode_str('处理完毕'))
+    try:
+        outputData.save(encode_str('out\\排班打卡比对.xls'))
+        print(encode_str('处理完毕'))
+    except IOError, e:
+        print(encode_str('无法写入表格文件。请确认已关闭该文件并且有操作权限！'))
+        raise
 except Exception, e:
-    print(encode_str('程序异常'))
-    print(e)
+    print('\n' + encode_str('程序异常！') + ' ' + e.message)
 finally:
     raw_input(encode_str('键入回车退出程序'))
