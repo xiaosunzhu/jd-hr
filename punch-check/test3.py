@@ -92,11 +92,14 @@ try:
         print(encode_str('排班代码配置 格式非法！'))
         raise
 
-    # planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
-    # punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
+    planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
+    punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
+    planFilePath = planFilePath.replace('"', "")
+    punchFilePath = punchFilePath.replace('"', "")
 
-    planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
-    punchFilePath = encode_str('resources\\打卡记录.xls')
+    # planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
+    # punchFilePath = encode_str('resources\\打卡记录.xls')
+
     startDateNum = 1
     endDateNum = 1
     try:
@@ -301,12 +304,13 @@ try:
                                                       work.get_punch_out_datetime(), planType,
                                                       exceptionMsg, detailsLocateRow)
     try:
-        outputData.save(encode_str('out\\排班打卡比对.xls'))
+        outputData.save(encode_str('排班打卡比对.xls'))
         print(encode_str('处理完毕'))
     except IOError, e:
         print(encode_str('无法写入表格文件。请确认已关闭该文件并且有操作权限！'))
         raise
 except Exception, e:
     print('\n' + encode_str('程序异常！') + ' ' + e.message)
+    raise
 finally:
     raw_input(encode_str('键入回车退出程序'))
