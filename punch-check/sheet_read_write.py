@@ -158,10 +158,10 @@ outputFinalSheet.col(2).width = 256 * 18
 outputFinalSheet.col(3).width = 256 * 18
 outputFinalSheet.col(4).width = 256 * 24
 outputFinalSheet.col(5).width = 256 * 24
-outputFinalSheet.col(6).width = 256 * 16
-outputFinalSheet.col(7).width = 256 * 14
+outputFinalSheet.col(6).width = 256 * 14
+outputFinalSheet.col(7).width = 256 * 12
 outputFinalSheet.col(8).width = 256 * 15
-outputFinalSheet.col(9).width = 256 * 14
+outputFinalSheet.col(9).width = 256 * 12
 outputFinalSheet.col(10).width = 256 * 15
 outputFinalSheet.write(0, 0, '序号')
 outputFinalSheet.write(0, 1, '姓名')

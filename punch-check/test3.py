@@ -32,11 +32,17 @@ try:
     tableConfig = ConfigParser.ConfigParser()
     with open(encode_str('resources\\表格配置.ini'), 'r') as cfg_file:
         tableConfig.readfp(cfg_file)
-    planTableNameCol = int(tableConfig.get(encode_str('排班表'), encode_str('姓名列'))) - 1
-    planTableNameStartRow = int(tableConfig.get(encode_str('排班表'), encode_str('姓名起始行'))) - 1
-    planTableDepartmentCol = int(tableConfig.get(encode_str('排班表'), encode_str('部门列'))) - 1
-    planTableDateRow = int(tableConfig.get(encode_str('排班表'), encode_str('日期行'))) - 1
-    planTableDateStartCol = int(tableConfig.get(encode_str('排班表'), encode_str('日期起始列'))) - 1
+    planTableNameCol = int(tableConfig.get(encode_str('排班表'), encode_str('姓名列')).strip()) - 1
+    planTableNameStartRow = int(tableConfig.get(encode_str('排班表'), encode_str('姓名起始行')).strip()) - 1
+    planTableDepartmentCol = int(tableConfig.get(encode_str('排班表'), encode_str('部门列')).strip()) - 1
+    planTableDateRow = int(tableConfig.get(encode_str('排班表'), encode_str('日期行')).strip()) - 1
+    planTableDateStartCol = int(tableConfig.get(encode_str('排班表'), encode_str('日期起始列')).strip()) - 1
+    punchDepartmentCol = int(tableConfig.get(encode_str('打卡表'), encode_str('部门列')).strip()) - 1
+    punchTableNameCol = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名列')).strip()) - 1
+    punchDateCol = int(tableConfig.get(encode_str('打卡表'), encode_str('日期列')).strip()) - 1
+    punchTimeCol = int(tableConfig.get(encode_str('打卡表'), encode_str('时间列')).strip()) - 1
+    punchTypeCol = int(tableConfig.get(encode_str('打卡表'), encode_str('类型列')).strip()) - 1
+    punchNameStartRow = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名起始行')).strip()) - 1
 
     planCodeConfig = ConfigParser.ConfigParser()
     with open(encode_str('resources\\排班代码配置.ini'), 'r') as cfg_file:
@@ -112,26 +118,20 @@ try:
 
     punchData = xlrd.open_workbook(punchFilePath)
     punchSheet = punchData.sheets()[0]
-    nameColIndex = 1
-    departmentColIndex = 0
-    dateColIndex = 3
-    timeColIndex = 4
-    punchTypeIndex = 5
-    nameStartRow = 1
 
     detailsOutputRow = 1
 
     noPlanOutputRow = 1
     processedNoPlanName = {}
-    for row in range(nameStartRow, punchSheet.nrows):
-        name = read_str_cell(punchSheet, row, nameColIndex)
+    for row in range(punchNameStartRow, punchSheet.nrows):
+        name = read_str_cell(punchSheet, row, punchTableNameCol)
         splits = name.split(' ')
         name = splits[len(splits) - 1]
-        department = read_str_cell(punchSheet, row, departmentColIndex)
-        currentDate = read_date_cells(punchSheet, punchData.datemode, row, dateColIndex)
-        currentTime = read_time_cells(punchSheet, punchData.datemode, row, timeColIndex)
+        department = read_str_cell(punchSheet, row, punchDepartmentCol)
+        currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
+        currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
         punchDatetime = get_date_time(currentDate, currentTime)
-        punchType = read_str_cell(punchSheet, row, punchTypeIndex)
+        punchType = read_str_cell(punchSheet, row, punchTypeCol)
         if name not in personMap.keys():
             if name not in processedNoPlanName.keys():
                 noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, name,
@@ -192,8 +192,6 @@ try:
 
     for name in nameSorted:
         person = personMap[name]
-        if name == '吴文晋':
-            print name
         for dateNum in range(startDateNum, endDateNum + 1):
             currentDate = date(year, month, dateNum)
             work = person.workDays.get(currentDate)
@@ -216,9 +214,9 @@ try:
                     work.punch(uncertainPunchOutLast)
                 elif nextDayWork.have_punch_in() or \
                                 (
-                                        uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds >= \
+                                            uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds >= \
                                 (
-                                        uncertainPunchOutLast.punchDatetime - nextDayWork.get_plan_begin_datetime()).seconds:
+                                            uncertainPunchOutLast.punchDatetime - nextDayWork.get_plan_begin_datetime()).seconds:
                     uncertainPunchOut = uncertainPunchOutFirst
                     for punchIn in work.uncertainPunchOutList:
                         if is_same_time_punch(uncertainPunchOut, punchIn):
@@ -267,6 +265,7 @@ try:
                                                                    punch.punchType,
                                                                    byDateOutputRow + 1,
                                                                    timeInfoSheet=True)
+                        punch.outputToDetails = True
             if not detailsLocateRow:
                 detailsLocateRow = detailsStartRow
             byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.name,
@@ -275,8 +274,8 @@ try:
                                                       exceptionMsg, detailsLocateRow)
     outputData.save(encode_str('out\\排班打卡比对.xls'))
     print(encode_str('处理完毕'))
-except Exception as e:
+except Exception, e:
     print(encode_str('程序异常'))
-    raise
+    print(e)
 finally:
     raw_input(encode_str('键入回车退出程序'))
