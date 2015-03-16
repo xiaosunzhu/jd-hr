@@ -30,8 +30,12 @@ PLAN_DEPARTMENT_MAP = {}
 
 try:
     tableConfig = ConfigParser.ConfigParser()
-    with open(encode_str('resources\\表格配置.ini'), 'r') as cfg_file:
-        tableConfig.readfp(cfg_file)
+    try:
+        with open(encode_str('config\\表格配置.ini'), 'r') as cfg_file:
+            tableConfig.readfp(cfg_file)
+    except IOError, e:
+        print(encode_str('无法打开表格配置！'))
+        raise
     try:
         planTableNameCol = int(tableConfig.get(encode_str('排班表'), encode_str('姓名列')).strip()) - 1
         planTableNameStartRow = int(tableConfig.get(encode_str('排班表'), encode_str('姓名起始行')).strip()) - 1
@@ -50,10 +54,14 @@ try:
         print(encode_str('表格配置 格式非法！'))
         raise
 
+    planCodeConfig = ConfigParser.ConfigParser()
     try:
-        planCodeConfig = ConfigParser.ConfigParser()
-        with open(encode_str('resources\\排班代码配置.ini'), 'r') as cfg_file:
+        with open(encode_str('config\\排班代码配置.ini'), 'r') as cfg_file:
             planCodeConfig.readfp(cfg_file)
+    except IOError, e:
+        print(encode_str('无法打开排班代码配置！'))
+        raise
+    try:
         for department in planCodeConfig.sections():
             departmentDecode = department.decode('GBK').encode('utf-8')
             PLAN_DEPARTMENT_MAP[departmentDecode] = {}
