@@ -228,7 +228,7 @@ try:
             work = person.workDays.get(currentDate)
             nextDayWork = None
             if dateNum != endDateNum:
-                nextDayWork = person.workDays.get(currentDate)
+                nextDayWork = person.workDays.get(date(year, month, dateNum + 1))
             if not work:
                 continue
             workDate = work.get_work_date()
@@ -244,10 +244,8 @@ try:
                 if not nextDayWork:
                     work.punch(uncertainPunchOutLast)
                 elif nextDayWork.have_punch_in() or \
-                                (
-                                            uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds >= \
-                                (
-                                            uncertainPunchOutLast.punchDatetime - nextDayWork.get_plan_begin_datetime()).seconds:
+                                (uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds <= (
+                            (nextDayWork.get_plan_begin_datetime() - work.get_plan_end_datetime()).seconds / 2):
                     uncertainPunchOut = uncertainPunchOutFirst
                     for punchIn in work.uncertainPunchOutList:
                         if is_same_time_punch(uncertainPunchOut, punchIn):

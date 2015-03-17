@@ -228,10 +228,10 @@ class Punch(object):
 
 
 def is_same_time_punch(punch1, punch2):
-    if punch1.punchDatetime < punch2.punchDatetime < (
+    if punch1.punchDatetime <= punch2.punchDatetime < (
             punch1.punchDatetime + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
-    elif punch1.punchDatetime > punch2.punchDatetime > (
+    elif punch1.punchDatetime >= punch2.punchDatetime > (
             punch1.punchDatetime - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
 
