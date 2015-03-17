@@ -8,4 +8,4 @@ options = {"py2exe":
        "bundle_files": 1
     }
 }
-setup(options = options, console=["test3.py"])
+setup(options = options, console=["punch_check.py"])

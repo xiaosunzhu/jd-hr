@@ -28,6 +28,9 @@ def encode_str(string):
 
 PLAN_DEPARTMENT_MAP = {}
 
+print(encode_str('Copyright 2015 yijun.sun'))
+print(encode_str('Version: 0.0.3'))
+
 try:
     tableConfig = ConfigParser.ConfigParser()
     try:
@@ -245,7 +248,7 @@ try:
                     work.punch(uncertainPunchOutLast)
                 elif nextDayWork.have_punch_in() or \
                                 (uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds <= (
-                            (nextDayWork.get_plan_begin_datetime() - work.get_plan_end_datetime()).seconds / 2):
+                                    (nextDayWork.get_plan_begin_datetime() - work.get_plan_end_datetime()).seconds / 2):
                     uncertainPunchOut = uncertainPunchOutFirst
                     for punchIn in work.uncertainPunchOutList:
                         if is_same_time_punch(uncertainPunchOut, punchIn):
