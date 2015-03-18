@@ -110,7 +110,6 @@ class WorkDay(object):
 
     def punch(self, punch):
         punch_datetime = punch.punchDatetime
-        punch_type = punch.punchType
         if self.uncertainPunchInBeginDatetime < punch_datetime <= self.get_plan_begin_datetime():
             self.havePunchIn = True
             self.punchInLate = False

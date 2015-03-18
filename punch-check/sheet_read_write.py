@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from datetime import time, date
+from datetime import time, date, datetime
 
 import xlrd
 import xlwt
@@ -68,7 +68,7 @@ LINK_FONT.colour_index = 4  # May be: 8 through 63. 0 = Black, 1 = White, 2 = Re
 
 
 def write_details_sheet_row(row, name, department, punch_datetime, punch_type,
-                            link_row, timeInfoSheet=False, noPlanSheet=False):
+                            link_row, time_info_sheet=False, no_plan_sheet=False):
     style = Style.default_style
     origin_pattern = style.pattern
     origin_font = style.font
@@ -76,19 +76,23 @@ def write_details_sheet_row(row, name, department, punch_datetime, punch_type,
         style.pattern = GRAY_BG_PATTERN
     outputDetailsSheet.write(row, 0, name)
     outputDetailsSheet.write(row, 1, department)
-    outputDetailsSheet.write(row, 2, str(punch_datetime))
+    outputDetailsSheet.write(row, 2, str(punch_datetime.date()))
     outputDetailsSheet.write(row, 3, punch_datetime.strftime('%H:%M:%S'))
     outputDetailsSheet.write(row, 4, punch_type)
     style.font = LINK_FONT
-    if timeInfoSheet:
+    if time_info_sheet:
         outputDetailsSheet.write(row, 5, xlwt.Formula(
             'HYPERLINK("#TimeInfo!A' + str(link_row) + '")'))
-    if noPlanSheet:
+    if no_plan_sheet:
         outputDetailsSheet.write(row, 5, xlwt.Formula(
             'HYPERLINK("#NotPlan!A' + str(link_row) + '")'))
     style.font = origin_font
     style.pattern = origin_pattern
     return row + 1
+
+
+def write_details_plan_col(start_row, end_row, plan):
+    outputDetailsSheet.write_merge(start_row, end_row, 6, 6, str(plan))
 
 
 def write_by_date_sheet_row(row, name, date, punch_in_datetime, punch_out_datetime, plan, msg,
@@ -218,12 +222,14 @@ outputDetailsSheet.col(2).width = 256 * 15
 outputDetailsSheet.col(3).width = 256 * 15
 outputDetailsSheet.col(4).width = 256 * 12
 outputDetailsSheet.col(5).width = 256 * 15
+outputDetailsSheet.col(6).width = 256 * 20
 outputDetailsSheet.write(0, 0, '姓名')
 outputDetailsSheet.write(0, 1, '部门')
 outputDetailsSheet.write(0, 2, '日期')
 outputDetailsSheet.write(0, 3, '打卡时间')
 outputDetailsSheet.write(0, 4, '记录状态')
 outputDetailsSheet.write(0, 5, '返回链接')
+outputDetailsSheet.write(0, 6, '排班')
 
 outputNoPlanSheet = outputData.add_sheet('NotPlan')
 outputNoPlanSheet.col(0).width = 256 * 6

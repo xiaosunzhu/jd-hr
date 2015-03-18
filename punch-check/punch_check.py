@@ -8,7 +8,7 @@ import xlrd
 
 from sheet_read_write import read_str_cell, read_cell_type, read_int_cell, read_date_cells, read_time_cells, \
     write_by_date_sheet_row, write_final_sheet_row, write_details_sheet_row, outputData, write_no_plan_sheet_row, \
-    MSG_NOT_PUNCH_IN, MSG_PUNCH_IN_LATE, MSG_NOT_PUNCH_OUT, MSG_PUNCH_OUT_EARLY, MSG_NOT_PUNCH
+    MSG_NOT_PUNCH_IN, MSG_PUNCH_IN_LATE, MSG_NOT_PUNCH_OUT, MSG_PUNCH_OUT_EARLY, MSG_NOT_PUNCH, write_details_plan_col
 from work_def import Person, WorkDay, Punch, get_date_time, PlanType, FLOAT_TYPE, is_same_time_punch
 
 
@@ -95,13 +95,13 @@ try:
         print(encode_str('排班代码配置 格式非法！'))
         raise
 
-    planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
-    punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
-    planFilePath = planFilePath.replace('"', "")
-    punchFilePath = punchFilePath.replace('"', "")
+    # planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
+    # punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
+    # planFilePath = planFilePath.replace('"', "")
+    # punchFilePath = punchFilePath.replace('"', "")
 
-    # planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
-    # punchFilePath = encode_str('resources\\打卡记录.xls')
+    planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
+    punchFilePath = encode_str('resources\\打卡记录.xls')
 
     startDateNum = 1
     endDateNum = 1
@@ -173,7 +173,7 @@ try:
                 processedNoPlanName[name] = noPlanOutputRow
             detailsOutputRow = write_details_sheet_row(detailsOutputRow, name, department,
                                                        punchDatetime, punchType,
-                                                       processedNoPlanName[name], noPlanSheet=True)
+                                                       processedNoPlanName[name], no_plan_sheet=True)
             continue
         person = personMap[name]
         person.add_punch(Punch(punchType, punchDatetime))
@@ -229,7 +229,10 @@ try:
         for dateNum in range(startDateNum, endDateNum + 1):
             currentDate = date(year, month, dateNum)
             work = person.workDays.get(currentDate)
+            beforeDayWork = None
             nextDayWork = None
+            if dateNum != startDateNum:
+                beforeDayWork = person.workDays.get(date(year, month, dateNum - 1))
             if dateNum != endDateNum:
                 nextDayWork = person.workDays.get(date(year, month, dateNum + 1))
             if not work:
@@ -284,6 +287,21 @@ try:
             detailsLocateRow = None
             if exceptionMsg:
                 exceptionMsg = exceptionMsg[:len(exceptionMsg) - 3]
+                if beforeDayWork:
+                    yesterdayPlan = beforeDayWork.planWork
+                else:
+                    yesterdayPlan = None
+                todayPlan = work.planWork
+                if nextDayWork:
+                    tomorrowPlan = nextDayWork.planWork
+                else:
+                    tomorrowPlan = None
+                yesterdayStartRow = None
+                yesterdayEndRow = None
+                todayStartRow = None
+                todayEndRow = None
+                tomorrowStartRow = None
+                tomorrowEndRow = None
                 for punch in person.punches:
                     if not punch.outputToDetails and (punch.punchDatetime.day == dateNum - 1 or
                                                               punch.punchDatetime.day == dateNum or punch.punchDatetime.day == dateNum + 1):
@@ -291,13 +309,31 @@ try:
                             detailsLocateRow = detailsOutputRow + 1
                         if not detailsLocateRow and punch.punchDatetime.day == dateNum + 1:
                             detailsLocateRow = detailsOutputRow
+                        if punch.punchDatetime.day == dateNum - 1:
+                            if not yesterdayStartRow:
+                                yesterdayStartRow = detailsOutputRow
+                            yesterdayEndRow = detailsOutputRow
+                        elif punch.punchDatetime.day == dateNum:
+                            if not todayStartRow:
+                                todayStartRow = detailsOutputRow
+                            todayEndRow = detailsOutputRow
+                        elif punch.punchDatetime.day == dateNum + 1:
+                            if not tomorrowStartRow:
+                                tomorrowStartRow = detailsOutputRow
+                            tomorrowEndRow = detailsOutputRow
                         detailsOutputRow = write_details_sheet_row(detailsOutputRow, person.name,
                                                                    person.department,
                                                                    punch.punchDatetime,
                                                                    punch.punchType,
                                                                    byDateOutputRow + 1,
-                                                                   timeInfoSheet=True)
+                                                                   time_info_sheet=True)
                         punch.outputToDetails = True
+                if yesterdayPlan and yesterdayStartRow:
+                    write_details_plan_col(yesterdayStartRow, yesterdayEndRow, yesterdayPlan)
+                if todayPlan and todayStartRow:
+                    write_details_plan_col(todayStartRow, todayEndRow, todayPlan)
+                if tomorrowPlan and tomorrowStartRow:
+                    write_details_plan_col(tomorrowStartRow, tomorrowEndRow, tomorrowPlan)
             if not detailsLocateRow:
                 detailsLocateRow = detailsStartRow
             byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.name,
@@ -305,7 +341,7 @@ try:
                                                       work.get_punch_out_datetime(), planType,
                                                       exceptionMsg, detailsLocateRow)
     try:
-        outputData.save(encode_str('排班打卡比对.xls'))
+        outputData.save(encode_str('排班打卡比对_' + str(year) + '年' + str(month) + '月.xls'))
         print(encode_str('处理完毕'))
     except IOError, e:
         print(encode_str('无法写入表格文件。请确认已关闭该文件并且有操作权限！'))
