@@ -57,6 +57,8 @@ try:
         print(encode_str('表格配置 格式非法！'))
         raise
 
+    globalPlanSection = '请假'
+
     planCodeConfig = ConfigParser.ConfigParser()
     try:
         with open(encode_str('config\\排班代码配置.ini'), 'r') as cfg_file:
@@ -71,26 +73,38 @@ try:
             departmentConfig = planCodeConfig.items(department)
             for planCode in departmentConfig:
                 planCodeString = planCode[0].upper()
-                timeStrings = planCode[1].split('-')
-                beginString = timeStrings[0]
-                if beginString == '':
-                    continue
-                endString = timeStrings[len(timeStrings) - 1]
-                beginHour = int(beginString.split(':')[0])
-                if beginHour == 24:
-                    beginHour = 0
-                beginTime = time(beginHour, int(beginString.split(':')[1]))
-                endHour = int(endString.split(':')[0])
-                if endHour == 24:
-                    endHour = 0
-                endTime = time(endHour, int(endString.split(':')[1]))
+                describe = None
+                timeString = planCode[1]
+                if ',' in planCode[1]:
+                    describe = planCode[1].split(',')[0]
+                    timeString = planCode[1].split(',')[1]
+                beginTime = None
+                endTime = None
                 acrossDay = False
-                if beginTime >= endTime:
-                    acrossDay = True
-                PLAN_DEPARTMENT_MAP[departmentDecode][planCode[0].upper()] = PlanType(planCodeString,
+                if '-' in timeString:
+                    timeStrings = timeString.split('-')
+                    beginString = timeStrings[0]
+                    if beginString == '':
+                        continue
+                    endString = timeStrings[len(timeStrings) - 1]
+                    beginHour = int(beginString.split(':')[0])
+                    if beginHour == 24:
+                        beginHour = 0
+                    beginTime = time(beginHour, int(beginString.split(':')[1]))
+                    endHour = int(endString.split(':')[0])
+                    if endHour == 24:
+                        endHour = 0
+                    endTime = time(endHour, int(endString.split(':')[1]))
+                    if beginTime >= endTime:
+                        acrossDay = True
+                needWork = False
+                if departmentDecode != globalPlanSection:
+                    needWork = True
+                PLAN_DEPARTMENT_MAP[departmentDecode][planCode[0].upper()] = PlanType(planCodeString, describe,
                                                                                       beginTime,
                                                                                       endTime,
-                                                                                      acrossDay)
+                                                                                      acrossDay, needWork)
+
     except Exception, e:
         print(encode_str('排班代码配置 格式非法！'))
         raise

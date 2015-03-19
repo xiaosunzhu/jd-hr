@@ -14,15 +14,19 @@ def enum(**enums):
 
 
 class PlanType(object):
-    def __init__(self, name, begin_time=None, end_time=None, across_day=False):
+    def __init__(self, name, describe, begin_time=None, end_time=None, across_day=False, need_work=True):
         self.name = name
+        if not describe:
+            self.describe = name
+        else:
+            self.describe = describe
         self.acrossDay = across_day
         self.beginTime = begin_time
         self.endTime = end_time
-        if not begin_time:
+        if begin_time == None or end_time == None:
             self.needWork = False
         else:
-            self.needWork = True
+            self.needWork = need_work
 
     def get_begin_time(self):
         return self.beginTime
@@ -228,10 +232,10 @@ class Punch(object):
 
 def is_same_time_punch(punch1, punch2):
     if punch1.punchDatetime <= punch2.punchDatetime < (
-            punch1.punchDatetime + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
+                punch1.punchDatetime + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
     elif punch1.punchDatetime >= punch2.punchDatetime > (
-            punch1.punchDatetime - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
+                punch1.punchDatetime - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
 
 
