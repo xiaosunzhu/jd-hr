@@ -109,13 +109,13 @@ try:
         print(encode_str('排班代码配置 格式非法！'))
         raise
 
-    # planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
-    # punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
-    # planFilePath = planFilePath.replace('"', "")
-    # punchFilePath = punchFilePath.replace('"', "")
+    planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
+    punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
+    planFilePath = planFilePath.replace('"', "")
+    punchFilePath = punchFilePath.replace('"', "")
 
-    planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
-    punchFilePath = encode_str('resources\\打卡记录.xls')
+    # planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
+    # punchFilePath = encode_str('resources\\打卡记录.xls')
 
     startDateNum = 1
     endDateNum = 1
