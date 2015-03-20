@@ -9,7 +9,7 @@ import xlrd
 from sheet_read_write import read_str_cell, read_cell_type, read_int_cell, read_date_cells, read_time_cells, \
     write_by_date_sheet_row, write_final_sheet_row, write_details_sheet_row, outputData, write_no_plan_sheet_row, \
     MSG_NOT_PUNCH_IN, MSG_PUNCH_IN_LATE, MSG_NOT_PUNCH_OUT, MSG_PUNCH_OUT_EARLY, MSG_NOT_PUNCH, write_details_plan_col
-from work_def import Person, WorkDay, Punch, get_date_time, PlanType, FLOAT_TYPE, is_same_time_punch
+from work_def import Person, WorkDay, Punch, get_date_time, PlanType, FLOAT_TYPE, is_same_time_punch, RestDay
 
 
 __author__ = 'yijun.sun'
@@ -71,13 +71,13 @@ try:
             departmentDecode = department.decode('GBK').encode('utf-8')
             PLAN_DEPARTMENT_MAP[departmentDecode] = {}
             departmentConfig = planCodeConfig.items(department)
-            for planCode in departmentConfig:
-                planCodeString = planCode[0].upper()
+            for planConfig in departmentConfig:
+                planCodeString = planConfig[0].upper().decode('GBK').encode('utf-8')
                 describe = None
-                timeString = planCode[1]
-                if ',' in planCode[1]:
-                    describe = planCode[1].split(',')[0]
-                    timeString = planCode[1].split(',')[1]
+                timeString = planConfig[1].decode('GBK').encode('utf-8')
+                if ',' in planConfig[1]:
+                    describe = planConfig[1].split(',')[0]
+                    timeString = planConfig[1].split(',')[1]
                 beginTime = None
                 endTime = None
                 acrossDay = False
@@ -100,10 +100,10 @@ try:
                 needWork = False
                 if departmentDecode != globalPlanSection:
                     needWork = True
-                PLAN_DEPARTMENT_MAP[departmentDecode][planCode[0].upper()] = PlanType(planCodeString, describe,
-                                                                                      beginTime,
-                                                                                      endTime,
-                                                                                      acrossDay, needWork)
+                PLAN_DEPARTMENT_MAP[departmentDecode][planCodeString] = PlanType(planCodeString, describe,
+                                                                                 beginTime,
+                                                                                 endTime,
+                                                                                 acrossDay, needWork)
 
     except Exception, e:
         print(encode_str('排班代码配置 格式非法！'))
@@ -129,6 +129,7 @@ try:
         raise
     planSheet = planData.sheets()[planSheetIndex]
     personMap = {}
+    globalPlanTimeMap = PLAN_DEPARTMENT_MAP.get(globalPlanSection)
     for row in range(planTableNameStartRow, planSheet.nrows):
         name = read_str_cell(planSheet, row, planTableNameCol)
         department = read_str_cell(planSheet, row, planTableDepartmentCol).strip()
@@ -151,11 +152,16 @@ try:
                 colNum += 1
                 continue
             planWork = planTimeMap.get(planType)
-            if not planWork or not planWork.needWork:
-                colNum += 1
-                continue
-            workPlan = WorkDay(date(year, month, dateTemp), planTimeMap[planType])
-            personMap[name].add_work_day(workPlan)
+            if not planWork:
+                planWork = globalPlanTimeMap.get(planType)
+                if not planWork:
+                    colNum += 1
+                    continue
+            if planWork.needWork:
+                workPlan = WorkDay(date(year, month, dateTemp), planWork)
+            else:
+                workPlan = RestDay(date(year, month, dateTemp), planWork)
+            personMap[name].add_day_plan(workPlan)
             colNum += 1
 
     detailsOutputRow = 1
@@ -243,12 +249,32 @@ try:
         for dateNum in range(startDateNum, endDateNum + 1):
             currentDate = date(year, month, dateNum)
             work = person.workDays.get(currentDate)
+            rest = person.restDays.get(currentDate)
             beforeDayWork = None
             nextDayWork = None
             if dateNum != startDateNum:
                 beforeDayWork = person.workDays.get(date(year, month, dateNum - 1))
             if dateNum != endDateNum:
                 nextDayWork = person.workDays.get(date(year, month, dateNum + 1))
+
+            if rest:
+                if not rest.haveOutput:
+                    lastRestDateNum = dateNum
+                    rest.mark_output()
+                    while lastRestDateNum < endDateNum and person.restDays.get(date(year, month, lastRestDateNum + 1)):
+                        if person.restDays.get(date(year, month, lastRestDateNum + 1)).plan == rest.plan:
+                            person.restDays.get(date(year, month, lastRestDateNum + 1)).mark_output()
+                            lastRestDateNum += 1
+                        else:
+                            break
+                    lastRest = person.restDays.get(date(year, month, lastRestDateNum))
+                    finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
+                                                           person.department,
+                                                           rest.get_plan_begin_datetime(),
+                                                           lastRest.get_plan_end_datetime(),
+                                                           rest.plan.describe.decode(SYSTEM_ENCODING), None)
+                continue
+
             if not work:
                 continue
             workDate = work.get_work_date()

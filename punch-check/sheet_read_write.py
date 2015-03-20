@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from datetime import time, date, datetime
+from datetime import time, date
 
 import xlrd
 import xlwt
@@ -145,10 +145,11 @@ def write_final_sheet_row(row, name, department, leave_start, leave_end, type, l
     outputFinalSheet.write(row, 4, str(leave_start))
     outputFinalSheet.write(row, 5, str(leave_end))
     outputFinalSheet.write(row, 6, type)
-    style.font = LINK_FONT
-    outputFinalSheet.write(row, 7, xlwt.Formula(
-        'HYPERLINK("#TimeInfo!A' + str(link_exception_row) + '")'))
-    style.font = origin_font
+    if link_exception_row is not None:
+        style.font = LINK_FONT
+        outputFinalSheet.write(row, 7, xlwt.Formula(
+            'HYPERLINK("#TimeInfo!A' + str(link_exception_row) + '")'))
+        style.font = origin_font
     style.pattern = origin_pattern
     return row + 1
 

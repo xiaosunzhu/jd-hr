@@ -53,34 +53,38 @@ class Person(object):
         self.name = name
         self.department = department
         self.workDays = {}  # Map(date,WorkDay)
+        self.restDays = {}  # Map(date,RestDay)
         self.punches = []  # Map(date,Punch[])
 
-    def add_work_day(self, work_day):
-        self.workDays[work_day.workDate] = work_day
-        yesterday = work_day.workDate - timedelta(1)
+    def add_day_plan(self, day_plan):
+        if isinstance(day_plan, RestDay):
+            self.restDays[day_plan.workDate] = day_plan
+        if isinstance(day_plan, WorkDay):
+            self.workDays[day_plan.workDate] = day_plan
+            yesterday = day_plan.workDate - timedelta(1)
 
-        work_day_before = self.workDays.get(yesterday)
-        current_begin = work_day.get_plan_begin_datetime()
-        if work_day_before:
-            yesterday_end = work_day_before.get_plan_end_datetime()
-            uncertain_begin = current_begin - timedelta(
-                seconds=((current_begin - yesterday_end).seconds // 2)) - timedelta(
-                hours=UNCERTAIN_WIN_HOURS_HALF)
-            uncertain_end = current_begin - timedelta(
-                seconds=((current_begin - yesterday_end).seconds // 2)) + timedelta(
-                hours=UNCERTAIN_WIN_HOURS_HALF)
-            work_day.set_valid_begin_datetime(uncertain_end)
-            work_day.set_uncertain_punch_in_begin_datetime(uncertain_begin)
-            work_day_before.set_valid_end_datetime(uncertain_begin)
-            work_day_before.set_uncertain_punch_out_end_datetime(uncertain_end)
-        else:
-            work_day.set_valid_begin_datetime(current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
-            work_day.set_uncertain_punch_in_begin_datetime(
-                current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
-        current_end = work_day.get_plan_end_datetime()
-        work_day.set_valid_end_datetime(current_end + timedelta(hours=NO_PLAN_EXPAND_HOURS))
-        work_day.set_uncertain_punch_out_end_datetime(
-            current_end + timedelta(hours=NO_PLAN_EXPAND_HOURS))
+            work_day_before = self.workDays.get(yesterday)
+            current_begin = day_plan.get_plan_begin_datetime()
+            if work_day_before:
+                yesterday_end = work_day_before.get_plan_end_datetime()
+                uncertain_begin = current_begin - timedelta(
+                    seconds=((current_begin - yesterday_end).seconds // 2)) - timedelta(
+                    hours=UNCERTAIN_WIN_HOURS_HALF)
+                uncertain_end = current_begin - timedelta(
+                    seconds=((current_begin - yesterday_end).seconds // 2)) + timedelta(
+                    hours=UNCERTAIN_WIN_HOURS_HALF)
+                day_plan.set_valid_begin_datetime(uncertain_end)
+                day_plan.set_uncertain_punch_in_begin_datetime(uncertain_begin)
+                work_day_before.set_valid_end_datetime(uncertain_begin)
+                work_day_before.set_uncertain_punch_out_end_datetime(uncertain_end)
+            else:
+                day_plan.set_valid_begin_datetime(current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
+                day_plan.set_uncertain_punch_in_begin_datetime(
+                    current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
+            current_end = day_plan.get_plan_end_datetime()
+            day_plan.set_valid_end_datetime(current_end + timedelta(hours=NO_PLAN_EXPAND_HOURS))
+            day_plan.set_uncertain_punch_out_end_datetime(
+                current_end + timedelta(hours=NO_PLAN_EXPAND_HOURS))
 
     def add_punch(self, punch):
         self.punches.append(punch)
@@ -221,6 +225,25 @@ class WorkDay(object):
             return get_date_time(self.workDate + timedelta(days=1), self.planWork.get_end_time())
         else:
             return get_date_time(self.workDate, self.planWork.get_end_time())
+
+
+class RestDay(object):
+    def __init__(self, work_date, plan):
+        self.workDate = work_date
+        self.plan = plan  # PlanType
+        self.haveOutput = False
+
+    def mark_output(self):
+        self.haveOutput = True
+
+    def get_plan_describe(self):
+        return self.plan.describe
+
+    def get_plan_begin_datetime(self):
+        return get_date_time(self.workDate, self.plan.get_begin_time())
+
+    def get_plan_end_datetime(self):
+        return get_date_time(self.workDate, self.plan.get_end_time())
 
 
 class Punch(object):
