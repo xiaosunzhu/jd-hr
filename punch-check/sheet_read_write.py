@@ -132,7 +132,8 @@ def write_by_date_sheet_row(row, name, date, punch_in_datetime, punch_out_dateti
     return row + 1
 
 
-def write_final_sheet_row(row, name, department, leave_start, leave_end, type, link_exception_row):
+def write_final_sheet_row(row, name, department, leave_start, leave_end, type,
+                          link_exception_row, dayCount=1):
     style = Style.default_style
     origin_pattern = style.pattern
     origin_font = style.font
@@ -145,9 +146,17 @@ def write_final_sheet_row(row, name, department, leave_start, leave_end, type, l
     outputFinalSheet.write(row, 4, str(leave_start))
     outputFinalSheet.write(row, 5, str(leave_end))
     outputFinalSheet.write(row, 6, type)
+    if type == MSG_NOT_PUNCH:
+        timePeriod = 0.0
+        restHours = 1.0
+    else:
+        timePeriod = dayCount * 8
+        restHours = timePeriod
+    outputFinalSheet.write(row, 7, timePeriod)
+    outputFinalSheet.write(row, 8, restHours)
     if link_exception_row is not None:
         style.font = LINK_FONT
-        outputFinalSheet.write(row, 7, xlwt.Formula(
+        outputFinalSheet.write(row, 9, xlwt.Formula(
             'HYPERLINK("#TimeInfo!A' + str(link_exception_row) + '")'))
         style.font = origin_font
     style.pattern = origin_pattern
@@ -181,8 +190,8 @@ outputFinalSheet.col(3).width = 256 * 18
 outputFinalSheet.col(4).width = 256 * 24
 outputFinalSheet.col(5).width = 256 * 24
 outputFinalSheet.col(6).width = 256 * 14
-outputFinalSheet.col(7).width = 256 * 15
-outputFinalSheet.col(8).width = 256 * 12
+outputFinalSheet.col(7).width = 256 * 12
+outputFinalSheet.col(8).width = 256 * 15
 outputFinalSheet.col(9).width = 256 * 15
 outputFinalSheet.col(10).width = 256 * 12
 outputFinalSheet.write(0, 0, '序号')
@@ -192,9 +201,9 @@ outputFinalSheet.write(0, 3, '岗位')
 outputFinalSheet.write(0, 4, '起假时间')
 outputFinalSheet.write(0, 5, '截止时间')
 outputFinalSheet.write(0, 6, '假别')
-outputFinalSheet.write(0, 7, '排班链接')
-outputFinalSheet.write(0, 8, '时间段')
-outputFinalSheet.write(0, 9, '请假时间（小时）')
+outputFinalSheet.write(0, 7, '时间段')
+outputFinalSheet.write(0, 8, '请假时间（小时）')
+outputFinalSheet.write(0, 9, '排班链接')
 outputFinalSheet.write(0, 10, '状态')
 
 outputByDateSheet = outputData.add_sheet('TimeInfo')

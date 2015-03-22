@@ -170,12 +170,14 @@ try:
                 if not rest.haveOutput:
                     lastRestDateNum = dateNum
                     rest.mark_output()
+                    dayCount = 1
                     while lastRestDateNum < endDateNum and person.restDays.get(
                             date(year, month, lastRestDateNum + 1)):
                         if person.restDays.get(
                                 date(year, month, lastRestDateNum + 1)).plan == rest.plan:
                             person.restDays.get(
                                 date(year, month, lastRestDateNum + 1)).mark_output()
+                            dayCount += 1
                             lastRestDateNum += 1
                         else:
                             break
@@ -185,7 +187,7 @@ try:
                                                            rest.get_plan_begin_datetime(),
                                                            lastRest.get_plan_end_datetime(),
                                                            rest.plan.describe.decode(
-                                                               SYSTEM_ENCODING), None)
+                                                               SYSTEM_ENCODING), None, dayCount)
                 continue
 
             if not work:
