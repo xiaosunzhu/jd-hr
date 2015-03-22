@@ -26,7 +26,8 @@ try:
     punchFilePath = encode_str('resources\\打卡记录.xls')
 
     startDateNum = 1
-    endDateNum = 1
+    dateCount = 0
+    dates = []
     try:
         planData = xlrd.open_workbook(planFilePath)
     except IOError, e:
@@ -38,6 +39,7 @@ try:
     planSheet = planData.sheets()[planSheetIndex]
     personMap = {}
     globalPlanTimeMap = PLAN_DEPARTMENT_MAP.get(globalPlanSection)
+    haveSetDates = False
     for row in range(planTableNameStartRow, planSheet.nrows):
         name = read_str_cell(planSheet, row, planTableNameCol)
         department = read_str_cell(planSheet, row, planTableDepartmentCol).strip()
@@ -51,10 +53,16 @@ try:
         if not planTimeMap:
             continue
         colNum = planTableDateStartCol
+        currentMonth = startMonth
+        lastDateNum = 0
         while read_cell_type(planSheet, planTableDateRow, colNum) is FLOAT_TYPE:
-            dateTemp = read_int_cell(planSheet, planTableDateRow, colNum)
-            if dateTemp > endDateNum:
-                endDateNum = dateTemp
+            dateTempNum = read_int_cell(planSheet, planTableDateRow, colNum)
+            if lastDateNum > dateTempNum:
+                currentMonth += 1
+            dateTemp = date(year, currentMonth, dateTempNum)
+            lastDateNum = dateTempNum
+            if not haveSetDates and dateTemp not in dates:
+                dates.append(dateTemp)
             planType = read_str_cell(planSheet, row, colNum)
             if planType.strip() == '':
                 colNum += 1
@@ -66,11 +74,21 @@ try:
                     colNum += 1
                     continue
             if planWork.needWork:
-                workPlan = WorkDay(date(year, month, dateTemp), planWork)
+                workPlan = WorkDay(dateTemp, planWork)
             else:
-                workPlan = RestDay(date(year, month, dateTemp), planWork)
+                workPlan = RestDay(dateTemp, planWork)
             personMap[name].add_day_plan(workPlan)
             colNum += 1
+        haveSetDates = True
+    dates = sorted(dates)
+    oneDate = dates[0]
+    lastDate = dates[len(dates) - 1]
+    dateIndex = 0
+    while oneDate < lastDate:
+        if oneDate not in dates:
+            dates.append(oneDate)
+        oneDate = oneDate + timedelta(days=1)
+    dates = sorted(dates)
 
     detailsOutputRow = 1
     noPlanOutputRow = 1
@@ -110,8 +128,7 @@ try:
     for person in personMap.values():
         indexOfPunch = 0
         finishPersonPunchCheck = False
-        for dateNum in range(startDateNum, endDateNum + 1):
-            currentDate = date(year, month, dateNum)
+        for currentDate in dates:
             work = person.workDays.get(currentDate)
             if not work:
                 continue
@@ -155,39 +172,39 @@ try:
 
     for name in nameSorted:
         person = personMap[name]
-        for dateNum in range(startDateNum, endDateNum + 1):
-            currentDate = date(year, month, dateNum)
+        for index in range(0, len(dates)):
+            currentDate = dates[index]
             work = person.workDays.get(currentDate)
             rest = person.restDays.get(currentDate)
+            startDate = dates[0]
+            endDate = dates[len(dates) - 1]
             beforeDayWork = None
             nextDayWork = None
-            if dateNum != startDateNum:
-                beforeDayWork = person.workDays.get(date(year, month, dateNum - 1))
-            if dateNum != endDateNum:
-                nextDayWork = person.workDays.get(date(year, month, dateNum + 1))
+            if index > 0:
+                beforeDayWork = person.workDays.get(dates[index - 1])
+            if index < len(dates) - 1:
+                nextDayWork = person.workDays.get(dates[index + 1])
 
             if rest:
                 if not rest.haveOutput:
-                    lastRestDateNum = dateNum
+                    lastRestDateIndex = index
                     rest.mark_output()
-                    dayCount = 1
-                    while lastRestDateNum < endDateNum and person.restDays.get(
-                            date(year, month, lastRestDateNum + 1)):
-                        if person.restDays.get(
-                                date(year, month, lastRestDateNum + 1)).plan == rest.plan:
-                            person.restDays.get(
-                                date(year, month, lastRestDateNum + 1)).mark_output()
-                            dayCount += 1
-                            lastRestDateNum += 1
+                    restDayCount = 1
+                    while lastRestDateIndex < (len(dates) - 1) and \
+                            person.restDays.get(dates[lastRestDateIndex + 1]):
+                        if person.restDays.get(dates[lastRestDateIndex + 1]).plan == rest.plan:
+                            person.restDays.get(dates[lastRestDateIndex + 1]).mark_output()
+                            restDayCount += 1
+                            lastRestDateIndex += 1
                         else:
                             break
-                    lastRest = person.restDays.get(date(year, month, lastRestDateNum))
+                    lastRest = person.restDays.get(dates[lastRestDateIndex])
                     finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                            person.department,
                                                            rest.get_plan_begin_datetime(),
                                                            lastRest.get_plan_end_datetime(),
                                                            rest.plan.describe.decode(
-                                                               SYSTEM_ENCODING), None, dayCount)
+                                                               SYSTEM_ENCODING), None, restDayCount)
                 continue
 
             if not work:
@@ -230,7 +247,7 @@ try:
                                                        MSG_NOT_PUNCH, byDateOutputRow + 1)
             elif work.needPunchIn and work.is_punch_in_late():
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
-            if dateNum != endDateNum and work.needPunchOut and not work.have_punch_out():
+            if index < (len(dates) - 1) and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                        person.department,
@@ -260,21 +277,23 @@ try:
                 tomorrowEndRow = None
                 for punch in person.punches:
                     if not punch.notReal and not punch.outputToDetails and (
-                                    punch.punchDatetime.day == dateNum - 1 or
-                                    punch.punchDatetime.day == dateNum or punch.punchDatetime.day == dateNum + 1):
-                        if not detailsLocateRow and punch.punchDatetime.day == dateNum:
+                                (index > 0 and punch.punchDatetime.date() == dates[index - 1]) or
+                                    punch.punchDatetime.date() == currentDate or
+                            (index < (len(dates) - 1) and punch.punchDatetime.date() == dates[
+                                    index + 1])):
+                        if not detailsLocateRow and punch.punchDatetime.date() == currentDate:
                             detailsLocateRow = detailsOutputRow + 1
-                        if not detailsLocateRow and punch.punchDatetime.day == dateNum + 1:
+                        if not detailsLocateRow and punch.punchDatetime.date() > currentDate:
                             detailsLocateRow = detailsOutputRow
-                        if punch.punchDatetime.day == dateNum - 1:
+                        if punch.punchDatetime.date() < currentDate:
                             if not yesterdayStartRow:
                                 yesterdayStartRow = detailsOutputRow
                             yesterdayEndRow = detailsOutputRow
-                        elif punch.punchDatetime.day == dateNum:
+                        elif punch.punchDatetime.date() == currentDate:
                             if not todayStartRow:
                                 todayStartRow = detailsOutputRow
                             todayEndRow = detailsOutputRow
-                        elif punch.punchDatetime.day == dateNum + 1:
+                        elif punch.punchDatetime.date() > currentDate:
                             if not tomorrowStartRow:
                                 tomorrowStartRow = detailsOutputRow
                             tomorrowEndRow = detailsOutputRow
