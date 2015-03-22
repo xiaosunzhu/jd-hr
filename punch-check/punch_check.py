@@ -1,121 +1,29 @@
 # coding=utf-8
 
-import ConfigParser
-import sys
-from datetime import date, time
-
-import xlrd
-
-from sheet_read_write import read_str_cell, read_cell_type, read_int_cell, read_date_cells, read_time_cells, \
-    write_by_date_sheet_row, write_final_sheet_row, write_details_sheet_row, outputData, write_no_plan_sheet_row, \
-    MSG_NOT_PUNCH_IN, MSG_PUNCH_IN_LATE, MSG_NOT_PUNCH_OUT, MSG_PUNCH_OUT_EARLY, MSG_NOT_PUNCH, write_details_plan_col
-from work_def import Person, WorkDay, Punch, get_date_time, PlanType, FLOAT_TYPE, is_same_time_punch, RestDay
-
-
 __author__ = 'yijun.sun'
+
+import sys
+from datetime import date
+import xlrd
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-SYSTEM_ENCODING = 'GBK'
-year = 2015
-month = 2
-
-
-def encode_str(string):
-    return string.encode(SYSTEM_ENCODING)
-
-
-PLAN_DEPARTMENT_MAP = {}
+from configs import *
+from sheet_read_write import *
+from work_def import *
 
 print(encode_str('Copyright 2015 yijun.sun'))
 print(encode_str('Version: 0.0.3'))
 
 try:
-    tableConfig = ConfigParser.ConfigParser()
-    try:
-        with open(encode_str('config\\表格配置.ini'), 'r') as cfg_file:
-            tableConfig.readfp(cfg_file)
-    except IOError, e:
-        print(encode_str('无法打开表格配置！'))
-        raise
-    try:
-        planTableNameCol = int(tableConfig.get(encode_str('排班表'), encode_str('姓名列')).strip()) - 1
-        planTableNameStartRow = int(tableConfig.get(encode_str('排班表'), encode_str('姓名起始行')).strip()) - 1
-        planTableDepartmentCol = int(tableConfig.get(encode_str('排班表'), encode_str('部门列')).strip()) - 1
-        planTableDateRow = int(tableConfig.get(encode_str('排班表'), encode_str('日期行')).strip()) - 1
-        planTableDateStartCol = int(tableConfig.get(encode_str('排班表'), encode_str('日期起始列')).strip()) - 1
-        planSheetIndex = int(tableConfig.get(encode_str('排班表'), encode_str('Sheet')).strip()) - 1
-        punchDepartmentCol = int(tableConfig.get(encode_str('打卡表'), encode_str('部门列')).strip()) - 1
-        punchTableNameCol = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名列')).strip()) - 1
-        punchDateCol = int(tableConfig.get(encode_str('打卡表'), encode_str('日期列')).strip()) - 1
-        punchTimeCol = int(tableConfig.get(encode_str('打卡表'), encode_str('时间列')).strip()) - 1
-        punchTypeCol = int(tableConfig.get(encode_str('打卡表'), encode_str('类型列')).strip()) - 1
-        punchNameStartRow = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名起始行')).strip()) - 1
-        punchSheetIndex = int(tableConfig.get(encode_str('打卡表'), encode_str('Sheet')).strip()) - 1
-    except Exception, e:
-        print(encode_str('表格配置 格式非法！'))
-        raise
+    # planFilePath = raw_input(encode_str('排班表：'))
+    # punchFilePath = raw_input(encode_str('打卡表：'))
+    # planFilePath = planFilePath.replace('"', "")
+    # punchFilePath = punchFilePath.replace('"', "")
 
-    globalPlanSection = '请假'
-
-    planCodeConfig = ConfigParser.ConfigParser()
-    try:
-        with open(encode_str('config\\排班代码配置.ini'), 'r') as cfg_file:
-            planCodeConfig.readfp(cfg_file)
-    except IOError, e:
-        print(encode_str('无法打开排班代码配置！'))
-        raise
-    try:
-        for department in planCodeConfig.sections():
-            departmentDecode = department.decode('GBK').encode('utf-8')
-            PLAN_DEPARTMENT_MAP[departmentDecode] = {}
-            departmentConfig = planCodeConfig.items(department)
-            for planConfig in departmentConfig:
-                planCodeString = planConfig[0].upper().decode('GBK').encode('utf-8')
-                describe = None
-                timeString = planConfig[1].decode('GBK').encode('utf-8')
-                if ',' in planConfig[1]:
-                    describe = planConfig[1].split(',')[0]
-                    timeString = planConfig[1].split(',')[1]
-                beginTime = None
-                endTime = None
-                acrossDay = False
-                if '-' in timeString:
-                    timeStrings = timeString.split('-')
-                    beginString = timeStrings[0]
-                    if beginString == '':
-                        continue
-                    endString = timeStrings[len(timeStrings) - 1]
-                    beginHour = int(beginString.split(':')[0])
-                    if beginHour == 24:
-                        beginHour = 0
-                    beginTime = time(beginHour, int(beginString.split(':')[1]))
-                    endHour = int(endString.split(':')[0])
-                    if endHour == 24:
-                        endHour = 0
-                    endTime = time(endHour, int(endString.split(':')[1]))
-                    if beginTime >= endTime:
-                        acrossDay = True
-                needWork = False
-                if departmentDecode != globalPlanSection:
-                    needWork = True
-                PLAN_DEPARTMENT_MAP[departmentDecode][planCodeString] = PlanType(planCodeString, describe,
-                                                                                 beginTime,
-                                                                                 endTime,
-                                                                                 acrossDay, needWork)
-
-    except Exception, e:
-        print(encode_str('排班代码配置 格式非法！'))
-        raise
-
-    planFilePath = raw_input('排班表：'.encode(SYSTEM_ENCODING))
-    punchFilePath = raw_input('打卡表：'.encode(SYSTEM_ENCODING))
-    planFilePath = planFilePath.replace('"', "")
-    punchFilePath = punchFilePath.replace('"', "")
-
-    # planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
-    # punchFilePath = encode_str('resources\\打卡记录.xls')
+    planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
+    punchFilePath = encode_str('resources\\打卡记录.xls')
 
     startDateNum = 1
     endDateNum = 1
@@ -193,7 +101,8 @@ try:
                 processedNoPlanName[name] = noPlanOutputRow
             detailsOutputRow = write_details_sheet_row(detailsOutputRow, name, department,
                                                        punchDatetime, punchType,
-                                                       processedNoPlanName[name], no_plan_sheet=True)
+                                                       processedNoPlanName[name],
+                                                       no_plan_sheet=True)
             continue
         person = personMap[name]
         person.add_punch(Punch(punchType, punchDatetime))
@@ -261,9 +170,12 @@ try:
                 if not rest.haveOutput:
                     lastRestDateNum = dateNum
                     rest.mark_output()
-                    while lastRestDateNum < endDateNum and person.restDays.get(date(year, month, lastRestDateNum + 1)):
-                        if person.restDays.get(date(year, month, lastRestDateNum + 1)).plan == rest.plan:
-                            person.restDays.get(date(year, month, lastRestDateNum + 1)).mark_output()
+                    while lastRestDateNum < endDateNum and person.restDays.get(
+                            date(year, month, lastRestDateNum + 1)):
+                        if person.restDays.get(
+                                date(year, month, lastRestDateNum + 1)).plan == rest.plan:
+                            person.restDays.get(
+                                date(year, month, lastRestDateNum + 1)).mark_output()
                             lastRestDateNum += 1
                         else:
                             break
@@ -272,7 +184,8 @@ try:
                                                            person.department,
                                                            rest.get_plan_begin_datetime(),
                                                            lastRest.get_plan_end_datetime(),
-                                                           rest.plan.describe.decode(SYSTEM_ENCODING), None)
+                                                           rest.plan.describe.decode(
+                                                               SYSTEM_ENCODING), None)
                 continue
 
             if not work:
@@ -290,8 +203,10 @@ try:
                 if not nextDayWork:
                     work.punch(uncertainPunchOutLast)
                 elif nextDayWork.have_punch_in() or \
-                                (uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds <= (
-                                    (nextDayWork.get_plan_begin_datetime() - work.get_plan_end_datetime()).seconds / 2):
+                                (
+                                        uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds <= (
+                                (
+                                        nextDayWork.get_plan_begin_datetime() - work.get_plan_end_datetime()).seconds / 2):
                     uncertainPunchOut = uncertainPunchOutFirst
                     for punchIn in work.uncertainPunchOutList:
                         if is_same_time_punch(uncertainPunchOut, punchIn):

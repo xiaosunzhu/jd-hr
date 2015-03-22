@@ -1,5 +1,7 @@
 # coding=utf-8
 
+__author__ = 'yijun.sun'
+
 from datetime import time, date
 
 import xlrd
@@ -8,8 +10,6 @@ from xlwt import Style
 
 from work_def import STRING_TYPE, FLOAT_TYPE
 
-
-__author__ = 'yijun.sun'
 
 MSG_NOT_PUNCH = '未打卡'
 MSG_NOT_PUNCH_IN = '上班' + MSG_NOT_PUNCH

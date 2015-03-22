@@ -1,9 +1,9 @@
 # coding=utf-8
 
+__author__ = 'yijun.sun'
+
 from datetime import datetime, timedelta
 
-
-__author__ = 'yijun.sun'
 
 FLOAT_TYPE = type(1.0)
 STRING_TYPE = type('')
@@ -14,7 +14,8 @@ def enum(**enums):
 
 
 class PlanType(object):
-    def __init__(self, name, describe, begin_time=None, end_time=None, across_day=False, need_work=True):
+    def __init__(self, name, describe, begin_time=None, end_time=None, across_day=False,
+                 need_work=True):
         self.name = name
         if not describe:
             self.describe = name
@@ -78,7 +79,8 @@ class Person(object):
                 work_day_before.set_valid_end_datetime(uncertain_begin)
                 work_day_before.set_uncertain_punch_out_end_datetime(uncertain_end)
             else:
-                day_plan.set_valid_begin_datetime(current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
+                day_plan.set_valid_begin_datetime(
+                    current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
                 day_plan.set_uncertain_punch_in_begin_datetime(
                     current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
             current_end = day_plan.get_plan_end_datetime()
@@ -255,10 +257,10 @@ class Punch(object):
 
 def is_same_time_punch(punch1, punch2):
     if punch1.punchDatetime <= punch2.punchDatetime < (
-                punch1.punchDatetime + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
+            punch1.punchDatetime + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
     elif punch1.punchDatetime >= punch2.punchDatetime > (
-                punch1.punchDatetime - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
+            punch1.punchDatetime - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
 
 
