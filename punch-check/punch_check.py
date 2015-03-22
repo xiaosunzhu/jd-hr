@@ -22,8 +22,8 @@ try:
     # planFilePath = planFilePath.replace('"', "")
     # punchFilePath = punchFilePath.replace('"', "")
 
-    planFilePath = encode_str('resources\\2月28运输排班汇总表（双） .xlsx')
-    punchFilePath = encode_str('resources\\打卡记录.xls')
+    planFilePath = encode_str('resources\\3月20运输排班汇总表（单） .xlsx')
+    punchFilePath = encode_str('resources\\打卡记录3月.xlsx')
 
     startDateNum = 1
     dateCount = 0

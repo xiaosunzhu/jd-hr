@@ -146,13 +146,15 @@ class WorkDay(object):
                 self.punchOut = punch
             self.clear_uncertain_punch_out()
         else:
-            if not self.havePunchIn:
+            if not self.havePunchIn and (not self.uncertainPunchInList or ((punch_datetime - self
+            .get_plan_begin_datetime()).seconds < (self.get_plan_end_datetime() - self
+            .get_plan_end_datetime()).seconds // 2)):
                 self.havePunchIn = True
                 self.punchInLate = True
                 if not self.punchIn or self.punchIn.punchDatetime > punch_datetime:
                     self.punchIn = punch
                 self.punchInLatest = punch
-            elif not is_same_time_punch(self.punchInLatest, punch):
+            elif not self.punchInLatest or not is_same_time_punch(self.punchInLatest, punch):
                 self.havePunchOut = True
                 self.punchOutEarly = True
                 if not self.punchOut or self.punchOut.punchDatetime < punch_datetime:
