@@ -63,21 +63,31 @@ class Person(object):
         if isinstance(day_plan, WorkDay):
             self.workDays[day_plan.workDate] = day_plan
             yesterday = day_plan.workDate - timedelta(1)
-
             work_day_before = self.workDays.get(yesterday)
             current_begin = day_plan.get_plan_begin_datetime()
+
             if work_day_before:
                 yesterday_end = work_day_before.get_plan_end_datetime()
-                uncertain_begin = current_begin - timedelta(
-                    seconds=((current_begin - yesterday_end).seconds // 2)) - timedelta(
-                    hours=UNCERTAIN_WIN_HOURS_HALF)
-                uncertain_end = current_begin - timedelta(
-                    seconds=((current_begin - yesterday_end).seconds // 2)) + timedelta(
-                    hours=UNCERTAIN_WIN_HOURS_HALF)
-                day_plan.set_valid_begin_datetime(uncertain_end)
-                day_plan.set_uncertain_punch_in_begin_datetime(uncertain_begin)
-                work_day_before.set_valid_end_datetime(uncertain_begin)
-                work_day_before.set_uncertain_punch_out_end_datetime(uncertain_end)
+                if yesterday_end == current_begin:
+                    day_plan.set_valid_begin_datetime(current_begin)
+                    day_plan.set_uncertain_punch_in_begin_datetime(current_begin)
+                    day_plan.needPunchIn = False
+                    day_plan.punch(Punch(PunchTypeKey.PunchIn, current_begin, True))
+                    work_day_before.set_valid_end_datetime(current_begin)
+                    work_day_before.set_uncertain_punch_out_end_datetime(current_begin)
+                    work_day_before.needPunchOut = False
+                    work_day_before.punch(Punch(PunchTypeKey.PunchOut, yesterday_end, True))
+                else:
+                    uncertain_begin = current_begin - timedelta(
+                        seconds=((current_begin - yesterday_end).seconds // 2)) - timedelta(
+                        hours=UNCERTAIN_WIN_HOURS_HALF)
+                    uncertain_end = current_begin - timedelta(
+                        seconds=((current_begin - yesterday_end).seconds // 2)) + timedelta(
+                        hours=UNCERTAIN_WIN_HOURS_HALF)
+                    day_plan.set_valid_begin_datetime(uncertain_end)
+                    day_plan.set_uncertain_punch_in_begin_datetime(uncertain_begin)
+                    work_day_before.set_valid_end_datetime(uncertain_begin)
+                    work_day_before.set_uncertain_punch_out_end_datetime(uncertain_end)
             else:
                 day_plan.set_valid_begin_datetime(
                     current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
@@ -102,10 +112,12 @@ class WorkDay(object):
                                                   plan_work.get_end_time())
         else:
             self.validEndDatetime = get_date_time(work_date, plan_work.get_end_time())
+        self.needPunchIn = True
         self.havePunchIn = False
         self.punchInLate = False
         self.punchIn = None
         self.punchInLatest = None
+        self.needPunchOut = True
         self.havePunchOut = False
         self.punchOutEarly = False
         self.punchOut = None
@@ -120,14 +132,14 @@ class WorkDay(object):
 
     def punch(self, punch):
         punch_datetime = punch.punchDatetime
-        if self.uncertainPunchInBeginDatetime < punch_datetime <= self.get_plan_begin_datetime():
+        if self.uncertainPunchInBeginDatetime <= punch_datetime <= self.get_plan_begin_datetime():
             self.havePunchIn = True
             self.punchInLate = False
             if not self.punchIn or self.punchIn.punchDatetime > punch_datetime:
                 self.punchIn = punch
             self.punchInLatest = punch
             self.clear_uncertain_punch_in()
-        elif self.uncertainPunchOutEndDatetime > punch_datetime >= self.get_plan_end_datetime():
+        elif self.uncertainPunchOutEndDatetime >= punch_datetime >= self.get_plan_end_datetime():
             self.havePunchOut = True
             self.punchOutEarly = False
             if not self.punchOut or self.punchOut.punchDatetime < punch_datetime:
@@ -249,7 +261,8 @@ class RestDay(object):
 
 
 class Punch(object):
-    def __init__(self, punch_type, punch_datetime):
+    def __init__(self, punch_type, punch_datetime, not_real=False):
+        self.notReal = not_real # 是否是打卡记录中存在的。或者是系统自动添加的True。
         self.punchType = punch_type
         self.punchDatetime = punch_datetime
         self.outputToDetails = False

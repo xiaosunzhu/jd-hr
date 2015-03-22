@@ -196,9 +196,10 @@ try:
             planType = work.get_plan_type()
 
             # 补充确定先前不确定的打卡记录
-            if not work.have_punch_in() and work.uncertainPunchInList:
+            if work.needPunchIn and not work.have_punch_in() and work.uncertainPunchInList:
                 work.punch(work.uncertainPunchInList[0])
-            if not work.have_punch_out() and len(work.uncertainPunchOutList) > 0:
+            if work.needPunchOut and not work.have_punch_out() and len(
+                    work.uncertainPunchOutList) > 0:
                 uncertainPunchOutFirst = work.uncertainPunchOutList[0]
                 uncertainPunchOutLast = work.uncertainPunchOutList[
                     len(work.uncertainPunchOutList) - 1]
@@ -220,26 +221,24 @@ try:
                     # 补充确定先前不确定的打卡记录
 
             exceptionMsg = ''
-            if not work.have_punch_in():
+            if work.needPunchIn and not work.have_punch_in():
                 exceptionMsg += MSG_NOT_PUNCH_IN + ' / '
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                        person.department,
                                                        work.get_plan_begin_datetime(),
                                                        work.get_plan_begin_datetime(),
                                                        MSG_NOT_PUNCH, byDateOutputRow + 1)
-            elif work.is_punch_in_late():
+            elif work.needPunchIn and work.is_punch_in_late():
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
-            if dateNum != endDateNum and not work.have_punch_out():
+            if dateNum != endDateNum and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                        person.department,
                                                        work.get_plan_end_datetime(),
                                                        work.get_plan_end_datetime(),
                                                        MSG_NOT_PUNCH, byDateOutputRow + 1)
-            elif work.is_punch_out_early():
+            elif work.needPunchOut and work.is_punch_out_early():
                 exceptionMsg += MSG_PUNCH_OUT_EARLY + ' / '
-            if work.have_punch_in() and not work.is_punch_in_late() and work.have_punch_out() and not work.is_punch_out_early():
-                pass
             detailsStartRow = detailsOutputRow + 1
             detailsLocateRow = None
             if exceptionMsg:
@@ -260,8 +259,9 @@ try:
                 tomorrowStartRow = None
                 tomorrowEndRow = None
                 for punch in person.punches:
-                    if not punch.outputToDetails and (punch.punchDatetime.day == dateNum - 1 or
-                                                              punch.punchDatetime.day == dateNum or punch.punchDatetime.day == dateNum + 1):
+                    if not punch.notReal and not punch.outputToDetails and (
+                                    punch.punchDatetime.day == dateNum - 1 or
+                                    punch.punchDatetime.day == dateNum or punch.punchDatetime.day == dateNum + 1):
                         if not detailsLocateRow and punch.punchDatetime.day == dateNum:
                             detailsLocateRow = detailsOutputRow + 1
                         if not detailsLocateRow and punch.punchDatetime.day == dateNum + 1:
