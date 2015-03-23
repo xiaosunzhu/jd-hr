@@ -101,6 +101,7 @@ try:
         raise
     punchSheet = punchData.sheets()[punchSheetIndex]
     processedNoPlanName = {}
+    nameSorted = []
     for row in range(punchNameStartRow, punchSheet.nrows):
         name = read_str_cell(punchSheet, row, punchTableNameCol)
         splits = name.split(' ')
@@ -109,12 +110,15 @@ try:
         currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
         currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
         punchDatetime = get_date_time(currentDate, currentTime)
+        if name == '张之全' and currentDate == date(2015, 3, 10):
+            print name
         punchType = read_str_cell(punchSheet, row, punchTypeCol)
         if name not in personMap.keys():
             if name not in processedNoPlanName.keys():
                 noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, name,
                                                           department, detailsOutputRow + 1)
                 processedNoPlanName[name] = noPlanOutputRow
+                nameSorted.append(name)
             detailsOutputRow = write_details_sheet_row(detailsOutputRow, name, department,
                                                        punchDatetime, punchType,
                                                        processedNoPlanName[name],
@@ -127,6 +131,8 @@ try:
         indexOfPunch = 0
         finishPersonPunchCheck = False
         for currentDate in dates:
+            if person.name == '张之全' and currentDate == date(2015, 3, 10):
+                print person.name
             work = person.workDays.get(currentDate)
             if not work:
                 continue
@@ -168,7 +174,7 @@ try:
                     break
             indexOfPunch -= uncertainCount
 
-    nameSorted = sorted(personMap.keys())
+    nameSorted = sorted(personMap.keys())  # TODO 不用排序，删除该行
     finalOutputRow = 1
     byDateOutputRow = 1
 
@@ -176,6 +182,8 @@ try:
         person = personMap[name]
         for index in range(0, len(dates)):
             currentDate = dates[index]
+            if person.name == '张之全' and currentDate == date(2015, 3, 10):
+                print person.name
             work = person.workDays.get(currentDate)
             rest = person.restDays.get(currentDate)
             startDate = dates[0]
