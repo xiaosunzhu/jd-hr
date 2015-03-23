@@ -248,7 +248,7 @@ try:
                     # 补充确定先前不确定的打卡记录
 
             exceptionMsg = ''
-            if work.needPunchIn and not work.have_punch_in():
+            if work.needPunchIn and not work.have_punch_in() and index < (len(dates) - 1):
                 exceptionMsg += MSG_NOT_PUNCH_IN + ' / '
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                        person.department,
