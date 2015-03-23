@@ -3,8 +3,6 @@
 __author__ = 'yijun.sun'
 
 import sys
-from datetime import date
-import xlrd
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -158,9 +156,13 @@ try:
             if indexOfPunch >= len(person.punches):
                 break
             while not work.is_after_work_uncertain_time(person.punches[indexOfPunch]):
-                work.uncertain_punch_out(person.punches[indexOfPunch])
-                person.punches[indexOfPunch].processed = True
-                uncertainCount += 1
+                if work.have_punch_out() and (work.get_punch_out_datetime() + timedelta(hours=PUNCH_TYPE_DIFF_MIN_HOUR)) \
+                        > person.punches[indexOfPunch].punchDatetime:
+                    work.punch(person.punches[indexOfPunch])
+                else:
+                    work.uncertain_punch_out(person.punches[indexOfPunch])
+                    person.punches[indexOfPunch].processed = True
+                    uncertainCount += 1
                 indexOfPunch += 1
                 if indexOfPunch >= len(person.punches):
                     break
@@ -224,9 +226,9 @@ try:
                     work.punch(uncertainPunchOutLast)
                 elif nextDayWork.have_punch_in() or \
                                 (
-                                        uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds <= (
-                                (
-                                        nextDayWork.get_plan_begin_datetime() - work.get_plan_end_datetime()).seconds / 2):
+                                            uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds <= (
+                                    (
+                                                nextDayWork.get_plan_begin_datetime() - work.get_plan_end_datetime()).seconds / 2):
                     uncertainPunchOut = uncertainPunchOutFirst
                     for punchIn in work.uncertainPunchOutList:
                         if is_same_time_punch(uncertainPunchOut, punchIn):
@@ -277,10 +279,10 @@ try:
                 tomorrowEndRow = None
                 for punch in person.punches:
                     if not punch.notReal and not punch.outputToDetails and (
-                                (index > 0 and punch.punchDatetime.date() == dates[index - 1]) or
-                                    punch.punchDatetime.date() == currentDate or
-                            (index < (len(dates) - 1) and punch.punchDatetime.date() == dates[
-                                    index + 1])):
+                                    (index > 0 and punch.punchDatetime.date() == dates[index - 1]) or
+                                        punch.punchDatetime.date() == currentDate or
+                                (index < (len(dates) - 1) and punch.punchDatetime.date() == dates[
+                                        index + 1])):
                         if not detailsLocateRow and punch.punchDatetime.date() == currentDate:
                             detailsLocateRow = detailsOutputRow + 1
                         if not detailsLocateRow and punch.punchDatetime.date() > currentDate:
