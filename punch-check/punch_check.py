@@ -60,8 +60,6 @@ try:
             if lastDateNum > dateTempNum:
                 currentMonth += 1
             dateTemp = date(year, currentMonth, dateTempNum)
-            if name == '龙安进' and dateTemp == date(2015, 3, 1):
-                print name
             lastDateNum = dateTempNum
             if not haveSetDates and dateTemp not in dates:
                 dates.append(dateTemp)
@@ -113,8 +111,6 @@ try:
         currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
         currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
         punchDatetime = get_date_time(currentDate, currentTime)
-        if name == '龙安进' and currentDate == date(2015, 3, 1):
-            print name
         punchType = read_str_cell(punchSheet, row, punchTypeCol)
         if name not in personMap.keys():
             if name not in processedNoPlanName.keys():
@@ -133,8 +129,6 @@ try:
         indexOfPunch = 0
         finishPersonPunchCheck = False
         for currentDate in dates:
-            if person.name == '龙安进' and currentDate == date(2015, 3, 1):
-                print person.name
             work = person.workDays.get(currentDate)
             if not work:
                 continue
@@ -183,8 +177,6 @@ try:
         person = personMap[name]
         for index in range(0, len(dates)):
             currentDate = dates[index]
-            if person.name == '龙安进' and currentDate == date(2015, 3, 1):
-                print person.name
             work = person.workDays.get(currentDate)
             rest = person.restDays.get(currentDate)
             startDate = dates[0]
