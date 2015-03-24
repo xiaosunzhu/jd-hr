@@ -224,12 +224,25 @@ try:
             planType = work.get_plan_type()
 
             # 补充确定先前不确定的打卡记录
-            if work.needPunchIn and not work.have_punch_in() and work.uncertainPunchInList:
+            if work.needPunchIn and work.uncertainPunchInList and (not work.have_punch_in() or work.is_punch_in_late()):
                 firstUncertainPunchIn = work.uncertainPunchInList[0]
-                # if work.is_punch_in_late():
-                # if firstUncertainPunchIn.punchDatetime
-                #         oldPunchIn = work.punchIn
-                work.punch(firstUncertainPunchIn)
+                mayBeEarlyPunchOut = None
+                # if work.is_punch_in_late() and can_be_in_out_diff_punch_type(firstUncertainPunchIn, work.punchIn):
+                if work.is_punch_in_late():
+                    # 本来是迟到，如果迟到时间和上班时间基本一致，而又离不确定时间不太远，那么不确定时间可以认定为上班打卡来消除迟到
+                    # 如果迟到时间和上班时间不一致，就有可能用不确定时间代替原迟到时间，而原迟到时间可能判定为早退时间
+                    if is_same_time(work.get_plan_begin_datetime(), work.punchIn.punchDatetime):
+                        for uncertainPunchIn in work.uncertainPunchInList:
+                            if not can_be_in_out_diff_punch_type(uncertainPunchIn, work.punchIn):
+                                work.punch(uncertainPunchIn)
+                                break
+                    elif can_be_in_out_diff_punch_type(firstUncertainPunchIn, work.punchIn):
+                        mayBeEarlyPunchOut = work.punchIn
+                        work.punch(firstUncertainPunchIn)
+                else:
+                    work.punch(firstUncertainPunchIn)
+                if mayBeEarlyPunchOut:
+                    work.punch(mayBeEarlyPunchOut)
             if work.needPunchOut and not work.have_punch_out() and len(
                     work.uncertainPunchOutList) > 0:
                 uncertainPunchOutFirst = work.uncertainPunchOutList[0]

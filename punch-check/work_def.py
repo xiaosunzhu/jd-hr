@@ -155,7 +155,8 @@ class WorkDay(object):
                 if not self.punchIn or self.punchIn.punchDatetime > punch_datetime:
                     self.punchIn = punch
                 self.punchInLatest = punch
-            elif not self.punchInLatest or not is_same_time_punch(self.punchInLatest, punch):
+            elif (not (self.havePunchOut and not self.punchOutEarly)) and (
+                        not self.punchInLatest or not is_same_time_punch(self.punchInLatest, punch)):
                 self.havePunchOut = True
                 self.punchOutEarly = True
                 if not self.punchOut or self.punchOut.punchDatetime < punch_datetime:
@@ -272,18 +273,20 @@ class Punch(object):
 
 
 def is_same_time_punch(punch1, punch2):
-    if punch1.punchDatetime <= punch2.punchDatetime < (
-                punch1.punchDatetime + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
+    return is_same_time(punch1.punchDatetime, punch2.punchDatetime)
+
+
+def is_same_time(datetime1, datetime2):
+    if datetime1 <= datetime2 < (datetime1 + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
-    elif punch1.punchDatetime >= punch2.punchDatetime > (
-                punch1.punchDatetime - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
+    elif datetime1 >= datetime2 > (datetime1 - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
+    else:
+        return False
 
 
 def can_be_in_out_diff_datetime(first_datetime, second_datetime):
-    if (second_datetime - first_datetime) > timedelta(hours=PUNCH_TYPE_DIFF_MIN_HOUR):
-        return True
-    return False
+    return (second_datetime - first_datetime) > timedelta(hours=PUNCH_TYPE_DIFF_MIN_HOUR)
 
 
 def can_be_in_out_diff_punch_type(first_punch, second_punch):
