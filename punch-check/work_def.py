@@ -147,9 +147,9 @@ class WorkDay(object):
                 self.punchOut = punch
             self.clear_uncertain_punch_out()
         else:
-            if not self.havePunchIn and (not self.uncertainPunchInList or ((punch_datetime - self
-            .get_plan_begin_datetime()).seconds < (self.get_plan_end_datetime() - self
-            .get_plan_end_datetime()).seconds // 2)):
+            if not self.havePunchIn and (not self.uncertainPunchInList or (
+                        (punch_datetime - self.get_plan_begin_datetime()).seconds < (
+                                self.get_plan_end_datetime() - punch_datetime).seconds)):
                 self.havePunchIn = True
                 self.punchInLate = True
                 if not self.punchIn or self.punchIn.punchDatetime > punch_datetime:
@@ -174,7 +174,7 @@ class WorkDay(object):
         old_punch_in_list = self.uncertainPunchInList
         self.uncertainPunchInList = []
         for punch in old_punch_in_list:
-            if (from_datetime + timedelta(hours=PUNCH_TYPE_DIFF_MIN_HOUR)) < punch.punchDatetime:
+            if can_be_in_out_diff_datetime(from_datetime, punch.punchDatetime):
                 self.uncertainPunchInList.append(punch)
 
     def clear_uncertain_punch_out(self):
@@ -265,7 +265,7 @@ class RestDay(object):
 
 class Punch(object):
     def __init__(self, punch_type, punch_datetime, not_real=False):
-        self.notReal = not_real # 是否是打卡记录中存在的。或者是系统自动添加的True。
+        self.notReal = not_real  # 是否是打卡记录中存在的。或者是系统自动添加的True。
         self.punchType = punch_type
         self.punchDatetime = punch_datetime
         self.outputToDetails = False
@@ -273,11 +273,21 @@ class Punch(object):
 
 def is_same_time_punch(punch1, punch2):
     if punch1.punchDatetime <= punch2.punchDatetime < (
-            punch1.punchDatetime + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
+                punch1.punchDatetime + timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
     elif punch1.punchDatetime >= punch2.punchDatetime > (
-            punch1.punchDatetime - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
+                punch1.punchDatetime - timedelta(minutes=ONCE_PUNCH_DIFF_MAX_MINUTE)):
         return True
+
+
+def can_be_in_out_diff_datetime(first_datetime, second_datetime):
+    if (second_datetime - first_datetime) > timedelta(hours=PUNCH_TYPE_DIFF_MIN_HOUR):
+        return True
+    return False
+
+
+def can_be_in_out_diff_punch_type(first_punch, second_punch):
+    return can_be_in_out_diff_datetime(first_punch.punchDatetime, second_punch.punchDatetime)
 
 
 def get_date_time(date_obj, time_obj):

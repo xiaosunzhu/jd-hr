@@ -60,6 +60,8 @@ try:
             if lastDateNum > dateTempNum:
                 currentMonth += 1
             dateTemp = date(year, currentMonth, dateTempNum)
+            if name == '李带备' and dateTemp == date(2015, 3, 3):
+                print name
             lastDateNum = dateTempNum
             if not haveSetDates and dateTemp not in dates:
                 dates.append(dateTemp)
@@ -111,7 +113,7 @@ try:
         currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
         currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
         punchDatetime = get_date_time(currentDate, currentTime)
-        if name == '张之全' and currentDate == date(2015, 3, 10):
+        if name == '李带备' and currentDate == date(2015, 3, 3):
             print name
         punchType = read_str_cell(punchSheet, row, punchTypeCol)
         if name not in personMap.keys():
@@ -131,7 +133,7 @@ try:
         indexOfPunch = 0
         finishPersonPunchCheck = False
         for currentDate in dates:
-            if person.name == '张之全' and currentDate == date(2015, 3, 10):
+            if person.name == '李带备' and currentDate == date(2015, 3, 3):
                 print person.name
             work = person.workDays.get(currentDate)
             if not work:
@@ -162,8 +164,8 @@ try:
             if indexOfPunch >= len(person.punches):
                 break
             while not work.is_after_work_uncertain_time(person.punches[indexOfPunch]):
-                if work.have_punch_out() and (work.get_punch_out_datetime() + timedelta(hours=PUNCH_TYPE_DIFF_MIN_HOUR)) \
-                        > person.punches[indexOfPunch].punchDatetime:
+                if work.have_punch_out() and (
+                        not can_be_in_out_diff_punch_type(work.punchOut, person.punches[indexOfPunch])):
                     work.punch(person.punches[indexOfPunch])
                 else:
                     work.uncertain_punch_out(person.punches[indexOfPunch])
@@ -181,7 +183,7 @@ try:
         person = personMap[name]
         for index in range(0, len(dates)):
             currentDate = dates[index]
-            if person.name == '张之全' and currentDate == date(2015, 3, 10):
+            if person.name == '李带备' and currentDate == date(2015, 3, 3):
                 print person.name
             work = person.workDays.get(currentDate)
             rest = person.restDays.get(currentDate)
@@ -223,7 +225,11 @@ try:
 
             # 补充确定先前不确定的打卡记录
             if work.needPunchIn and not work.have_punch_in() and work.uncertainPunchInList:
-                work.punch(work.uncertainPunchInList[0])
+                firstUncertainPunchIn = work.uncertainPunchInList[0]
+                # if work.is_punch_in_late():
+                # if firstUncertainPunchIn.punchDatetime
+                #         oldPunchIn = work.punchIn
+                work.punch(firstUncertainPunchIn)
             if work.needPunchOut and not work.have_punch_out() and len(
                     work.uncertainPunchOutList) > 0:
                 uncertainPunchOutFirst = work.uncertainPunchOutList[0]
