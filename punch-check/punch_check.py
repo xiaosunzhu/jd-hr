@@ -26,6 +26,7 @@ try:
     startDateNum = 1
     dateCount = 0
     dates = []
+    nameSorted = []
     try:
         planData = xlrd.open_workbook(planFilePath)
     except IOError, e:
@@ -48,6 +49,7 @@ try:
             continue
         if name not in personMap.keys():
             personMap[name] = Person(name, department)
+            nameSorted.append(name)
         if not planTimeMap:
             continue
         colNum = planTableDateStartCol
@@ -101,7 +103,6 @@ try:
         raise
     punchSheet = punchData.sheets()[punchSheetIndex]
     processedNoPlanName = {}
-    nameSorted = []
     for row in range(punchNameStartRow, punchSheet.nrows):
         name = read_str_cell(punchSheet, row, punchTableNameCol)
         splits = name.split(' ')
@@ -118,7 +119,6 @@ try:
                 noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, name,
                                                           department, detailsOutputRow + 1)
                 processedNoPlanName[name] = noPlanOutputRow
-                nameSorted.append(name)
             detailsOutputRow = write_details_sheet_row(detailsOutputRow, name, department,
                                                        punchDatetime, punchType,
                                                        processedNoPlanName[name],
@@ -174,7 +174,6 @@ try:
                     break
             indexOfPunch -= uncertainCount
 
-    nameSorted = sorted(personMap.keys())  # TODO 不用排序，删除该行
     finalOutputRow = 1
     byDateOutputRow = 1
 
@@ -248,7 +247,7 @@ try:
                     # 补充确定先前不确定的打卡记录
 
             exceptionMsg = ''
-            if work.needPunchIn and not work.have_punch_in() and index > 0 and index < (len(dates) - 1):
+            if work.needPunchIn and not work.have_punch_in() and 0 < index < (len(dates) - 1):
                 exceptionMsg += MSG_NOT_PUNCH_IN + ' / '
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                        person.department,
