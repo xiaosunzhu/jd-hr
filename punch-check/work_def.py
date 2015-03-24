@@ -44,7 +44,8 @@ class PlanType(object):
 
 
 UNCERTAIN_WIN_HOURS_HALF = 4
-NO_PLAN_EXPAND_HOURS = 12
+NO_PLAN_VALID_EXPAND_HOURS = 12
+NO_PLAN_UNCERTAIN_EXPAND_HOURS = 14
 PUNCH_TYPE_DIFF_MIN_HOUR = 3
 ONCE_PUNCH_DIFF_MAX_MINUTE = 50
 
@@ -90,13 +91,13 @@ class Person(object):
                     work_day_before.set_uncertain_punch_out_end_datetime(uncertain_end)
             else:
                 day_plan.set_valid_begin_datetime(
-                    current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
+                    current_begin - timedelta(hours=NO_PLAN_VALID_EXPAND_HOURS))
                 day_plan.set_uncertain_punch_in_begin_datetime(
-                    current_begin - timedelta(hours=NO_PLAN_EXPAND_HOURS))
+                    current_begin - timedelta(hours=NO_PLAN_UNCERTAIN_EXPAND_HOURS))
             current_end = day_plan.get_plan_end_datetime()
-            day_plan.set_valid_end_datetime(current_end + timedelta(hours=NO_PLAN_EXPAND_HOURS))
+            day_plan.set_valid_end_datetime(current_end + timedelta(hours=NO_PLAN_VALID_EXPAND_HOURS))
             day_plan.set_uncertain_punch_out_end_datetime(
-                current_end + timedelta(hours=NO_PLAN_EXPAND_HOURS))
+                current_end + timedelta(hours=NO_PLAN_UNCERTAIN_EXPAND_HOURS))
 
     def add_punch(self, punch):
         self.punches.append(punch)
