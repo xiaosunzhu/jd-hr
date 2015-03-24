@@ -60,7 +60,7 @@ try:
             if lastDateNum > dateTempNum:
                 currentMonth += 1
             dateTemp = date(year, currentMonth, dateTempNum)
-            if name == '李带备' and dateTemp == date(2015, 3, 3):
+            if name == '龙安进' and dateTemp == date(2015, 3, 1):
                 print name
             lastDateNum = dateTempNum
             if not haveSetDates and dateTemp not in dates:
@@ -113,7 +113,7 @@ try:
         currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
         currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
         punchDatetime = get_date_time(currentDate, currentTime)
-        if name == '李带备' and currentDate == date(2015, 3, 3):
+        if name == '龙安进' and currentDate == date(2015, 3, 1):
             print name
         punchType = read_str_cell(punchSheet, row, punchTypeCol)
         if name not in personMap.keys():
@@ -133,7 +133,7 @@ try:
         indexOfPunch = 0
         finishPersonPunchCheck = False
         for currentDate in dates:
-            if person.name == '李带备' and currentDate == date(2015, 3, 3):
+            if person.name == '龙安进' and currentDate == date(2015, 3, 1):
                 print person.name
             work = person.workDays.get(currentDate)
             if not work:
@@ -183,7 +183,7 @@ try:
         person = personMap[name]
         for index in range(0, len(dates)):
             currentDate = dates[index]
-            if person.name == '李带备' and currentDate == date(2015, 3, 3):
+            if person.name == '龙安进' and currentDate == date(2015, 3, 1):
                 print person.name
             work = person.workDays.get(currentDate)
             rest = person.restDays.get(currentDate)
@@ -243,27 +243,29 @@ try:
                     work.punch(firstUncertainPunchIn)
                 if mayBeEarlyPunchOut:
                     work.punch(mayBeEarlyPunchOut)
-            if work.needPunchOut and not work.have_punch_out() and len(
-                    work.uncertainPunchOutList) > 0:
-                uncertainPunchOutFirst = work.uncertainPunchOutList[0]
+            if work.needPunchOut and work.uncertainPunchOutList and (
+                        not work.have_punch_out() or work.is_punch_out_early()):
+                uncertainPunchOutFirstGroup = work.uncertainPunchOutList[0]
                 uncertainPunchOutLast = work.uncertainPunchOutList[
                     len(work.uncertainPunchOutList) - 1]
-                if not nextDayWork:
-                    work.punch(uncertainPunchOutLast)
-                elif nextDayWork.have_punch_in() or \
-                                (
-                                            uncertainPunchOutFirst.punchDatetime - work.get_plan_end_datetime()).seconds <= (
-                                    (
-                                                nextDayWork.get_plan_begin_datetime() - work.get_plan_end_datetime()).seconds / 2):
-                    uncertainPunchOut = uncertainPunchOutFirst
-                    for punchIn in work.uncertainPunchOutList:
-                        if is_same_time_punch(uncertainPunchOut, punchIn):
-                            uncertainPunchOut = punchIn
-                        else:
-                            break
-                    work.punch(uncertainPunchOut)
-                    nextDayWork.remove_processed_uncertain_punch_in(uncertainPunchOut.punchDatetime)
-                    # 补充确定先前不确定的打卡记录
+                haveMoreThanOneGroup = False
+                for uncertainPunchOut in work.uncertainPunchOutList:
+                    if can_be_in_out_diff_punch_type(uncertainPunchOut, uncertainPunchOutLast):
+                        haveMoreThanOneGroup = True
+                        uncertainPunchOutFirstGroup = uncertainPunchOut
+                    else:
+                        if not haveMoreThanOneGroup:
+                            uncertainPunchOutFirstGroup = uncertainPunchOutLast
+                        break
+                if not nextDayWork or haveMoreThanOneGroup or (
+                            nextDayWork.have_punch_in() and not nextDayWork.is_punch_in_late()) or (
+                            (work.uncertainPunchOutList[0].punchDatetime - work.get_plan_end_datetime()).seconds <=
+                            (
+                                nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds):
+                    work.punch(uncertainPunchOutFirstGroup)
+                    if nextDayWork:
+                        nextDayWork.remove_processed_uncertain_punch_in(uncertainPunchOutFirstGroup.punchDatetime)
+                        # 补充确定先前不确定的打卡记录
 
             exceptionMsg = ''
             if work.needPunchIn and not work.have_punch_in() and 0 < index < (len(dates) - 1):
