@@ -4,7 +4,9 @@ __author__ = 'SUNYIJUN'
 
 import ConfigParser
 from datetime import time
+
 from work_def import PlanType
+
 
 SYSTEM_ENCODING = 'GBK'
 
@@ -24,6 +26,7 @@ try:
     year = int(baseConfig.get(encode_str('Base'), encode_str('年')).strip())
     month = int(baseConfig.get(encode_str('Base'), encode_str('月')).strip())
     startMonth = int(baseConfig.get(encode_str('Base'), encode_str('起始月')).strip())
+    useGlobalPan = int(baseConfig.get(encode_str('Swtiches'), encode_str('全局排班')).strip())
 except Exception, e:
     print(encode_str('数据配置 格式非法！'))
     raise
@@ -53,7 +56,8 @@ except Exception, e:
     print(encode_str('表格配置 格式非法！'))
     raise
 
-globalPlanSection = '请假'
+restPlanSection = '请假'
+globalPlanSection = 'Global'
 
 PLAN_DEPARTMENT_MAP = {}
 
@@ -96,7 +100,7 @@ try:
                 if beginTime >= endTime:
                     acrossDay = True
             needWork = False
-            if departmentDecode != globalPlanSection:
+            if departmentDecode != restPlanSection:
                 needWork = True
             PLAN_DEPARTMENT_MAP[departmentDecode][planCodeString] = PlanType(planCodeString,
                                                                              describe,

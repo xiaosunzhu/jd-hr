@@ -37,12 +37,17 @@ try:
         raise
     planSheet = planData.sheets()[planSheetIndex]
     personMap = {}
+    restPlanTimeMap = PLAN_DEPARTMENT_MAP.get(restPlanSection)
     globalPlanTimeMap = PLAN_DEPARTMENT_MAP.get(globalPlanSection)
     haveSetDates = False
     for row in range(planTableNameStartRow, planSheet.nrows):
         name = read_str_cell(planSheet, row, planTableNameCol)
         department = read_str_cell(planSheet, row, planTableDepartmentCol).strip()
-        planTimeMap = PLAN_DEPARTMENT_MAP.get(department)
+        planTimeMap = None
+        if not useGlobalPan:
+            planTimeMap = PLAN_DEPARTMENT_MAP.get(department)
+        else:
+            planTimeMap = globalPlanTimeMap
         if planTimeMap is None:
             continue
         if name.strip() == '':
@@ -69,7 +74,7 @@ try:
                 continue
             planWork = planTimeMap.get(planType)
             if not planWork:
-                planWork = globalPlanTimeMap.get(planType)
+                planWork = restPlanTimeMap.get(planType)
                 if not planWork:
                     colNum += 1
                     continue
