@@ -4,17 +4,20 @@ __author__ = 'yijun.sun'
 
 import sys
 
+from base import *
+
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-from configs import *
-from sheet_read_write import *
-from work_def import *
-
 print(encode_str('Copyright 2015 yijun.sun'))
 print(encode_str('Version: 0.0.3'))
+print('')
 
 try:
+    from configs import *
+    from sheet_read_write import *
+    from work_def import *
+
     # planFilePath = raw_input(encode_str('排班表：'))
     # punchFilePath = raw_input(encode_str('打卡表：'))
     # planFilePath = planFilePath.replace('"', "")
@@ -361,7 +364,8 @@ try:
         print(encode_str('无法写入表格文件。请确认已关闭该文件并且有操作权限！'))
         raise
 except Exception, e:
-    print('\n' + encode_str('程序异常！') + ' ' + e.message)
-    raise
+    s = sys.exc_info()
+    print '%s on punch_check.py line %d' % (s[1], s[2].tb_lineno)
+    print(encode_str('程序异常！'))
 finally:
     raw_input(encode_str('键入回车退出程序'))
