@@ -258,7 +258,7 @@ try:
                             nextDayWork.have_punch_in() and not nextDayWork.is_punch_in_late()) or (
                             (work.uncertainPunchOutList[0].punchDatetime - work.get_plan_end_datetime()).seconds <=
                             (
-                                nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds):
+                                        nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds):
                     work.punch(uncertainPunchOutFirstGroup)
                     if nextDayWork:
                         nextDayWork.remove_processed_uncertain_punch_in(uncertainPunchOutFirstGroup.punchDatetime)
@@ -267,6 +267,7 @@ try:
             exceptionMsg = ''
             if work.needPunchIn and not work.have_punch_in() and 0 < index < (len(dates) - 1):
                 exceptionMsg += MSG_NOT_PUNCH_IN + ' / '
+                work.notPunchInRow = finalOutputRow
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                        person.department,
                                                        work.get_plan_begin_datetime(),
@@ -276,6 +277,7 @@ try:
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
             if index < (len(dates) - 1) and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
+                work.notPunchOutRow = finalOutputRow
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
                                                        person.department,
                                                        work.get_plan_end_datetime(),
@@ -343,6 +345,15 @@ try:
                                                       workDate, work.get_punch_in_datetime(),
                                                       work.get_punch_out_datetime(), planType,
                                                       exceptionMsg, detailsLocateRow)
+        # 连续异常加背景色
+        for index in range(0, len(dates)):
+            currentDate = dates[index]
+            work = person.workDays.get(currentDate)
+            if not work:
+                continue
+            if work.notPunchInRow and work.notPunchOutRow:  # 上下班均未打卡
+                write_final_sheet_bg(*(work.notPunchInRow, work.notPunchOutRow))
+
     try:
         outputData.save(encode_str('排班打卡比对_' + str(year) + '年' + str(month) + '月.xls'))
         print(encode_str('处理完毕'))

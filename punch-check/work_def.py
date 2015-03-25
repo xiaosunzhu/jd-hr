@@ -130,6 +130,8 @@ class WorkDay(object):
             self.uncertainPunchOutEndDatetime = get_date_time(work_date, plan_work.get_end_time())
         self.uncertainPunchInList = []
         self.uncertainPunchOutList = []
+        self.notPunchInRow = None
+        self.notPunchOutRow = None
 
     def punch(self, punch):
         punch_datetime = punch.punchDatetime
