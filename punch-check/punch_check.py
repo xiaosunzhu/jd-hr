@@ -29,7 +29,7 @@ try:
     startDateNum = 1
     dateCount = 0
     dates = []
-    nameSorted = []
+    identitySorted = []
     try:
         planData = xlrd.open_workbook(planFilePath)
     except IOError, e:
@@ -43,7 +43,8 @@ try:
     restPlanTimeMap = PLAN_DEPARTMENT_MAP.get(restPlanSection)
     globalPlanTimeMap = PLAN_DEPARTMENT_MAP.get(globalPlanSection)
     haveSetDates = False
-    for row in range(planTableNameStartRow, planSheet.nrows):
+    for row in range(planTablePersonStartRow, planSheet.nrows):
+        identity = read_str_cell(planSheet, row, planTableIdentityCol)
         name = read_str_cell(planSheet, row, planTableNameCol)
         department = read_str_cell(planSheet, row, planTableDepartmentCol).strip()
         planTimeMap = None
@@ -53,11 +54,11 @@ try:
             planTimeMap = globalPlanTimeMap
         if planTimeMap is None:
             continue
-        if name.strip() == '':
+        if identity.strip() == '':
             continue
-        if name not in personMap.keys():
-            personMap[name] = Person(name, department)
-            nameSorted.append(name)
+        if identity not in personMap.keys():
+            personMap[identity] = Person(identity, name, department)
+            identitySorted.append(identity)
         if not planTimeMap:
             continue
         colNum = planTableDateStartCol
@@ -85,7 +86,7 @@ try:
                 workPlan = WorkDay(dateTemp, planWork)
             else:
                 workPlan = RestDay(dateTemp, planWork)
-            personMap[name].add_day_plan(workPlan)
+            personMap[identity].add_day_plan(workPlan)
             colNum += 1
         haveSetDates = True
     dates = sorted(dates)
@@ -111,26 +112,26 @@ try:
         raise
     punchSheet = punchData.sheets()[punchSheetIndex]
     processedNoPlanName = {}
-    for row in range(punchNameStartRow, punchSheet.nrows):
-        name = read_str_cell(punchSheet, row, punchTableNameCol)
-        splits = name.split(' ')
-        name = splits[len(splits) - 1]
+    for row in range(punchPersonStartRow, punchSheet.nrows):
+        identity = read_str_cell(punchSheet, row, punchTableIdentityCol)
+        splits = identity.split(' ')
+        identity = splits[len(splits) - 1]
         department = read_str_cell(punchSheet, row, punchDepartmentCol)
         currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
         currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
         punchDatetime = get_date_time(currentDate, currentTime)
         punchType = read_str_cell(punchSheet, row, punchTypeCol)
-        if name not in personMap.keys():
-            if name not in processedNoPlanName.keys():
-                noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, name,
+        if identity not in personMap.keys():
+            if identity not in processedNoPlanName.keys():
+                noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, identity,
                                                           department, detailsOutputRow + 1)
-                processedNoPlanName[name] = noPlanOutputRow
-            detailsOutputRow = write_details_sheet_row(detailsOutputRow, name, department,
+                processedNoPlanName[identity] = noPlanOutputRow
+            detailsOutputRow = write_details_sheet_row(detailsOutputRow, identity, department,
                                                        punchDatetime, punchType,
-                                                       processedNoPlanName[name],
+                                                       processedNoPlanName[identity],
                                                        no_plan_sheet=True)
             continue
-        person = personMap[name]
+        person = personMap[identity]
         person.add_punch(Punch(punchType, punchDatetime))
 
     for person in personMap.values():
@@ -181,8 +182,8 @@ try:
     finalOutputRow = 1
     byDateOutputRow = 1
 
-    for name in nameSorted:
-        person = personMap[name]
+    for identity in identitySorted:
+        person = personMap[identity]
         for index in range(0, len(dates)):
             currentDate = dates[index]
             work = person.workDays.get(currentDate)

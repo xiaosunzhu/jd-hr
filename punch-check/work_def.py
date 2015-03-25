@@ -51,7 +51,8 @@ ONCE_PUNCH_DIFF_MAX_MINUTE = 50
 
 
 class Person(object):
-    def __init__(self, name, department):
+    def __init__(self, identity, name, department):
+        self.identity = identity
         self.name = name
         self.department = department
         self.workDays = {}  # Map(date,WorkDay)
