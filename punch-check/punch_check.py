@@ -1,4 +1,6 @@
 # coding=utf-8
+from time import sleep
+import traceback
 
 __author__ = 'yijun.sun'
 
@@ -114,8 +116,11 @@ try:
     processedNoPlanName = {}
     for row in range(punchPersonStartRow, punchSheet.nrows):
         identity = read_str_cell(punchSheet, row, punchTableIdentityCol)
+        name = read_str_cell(punchSheet, row, punchTableNameCol)
         splits = identity.split(' ')
         identity = splits[len(splits) - 1]
+        splits = name.split(' ')
+        name = splits[len(splits) - 1]
         department = read_str_cell(punchSheet, row, punchDepartmentCol)
         currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
         currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
@@ -132,6 +137,9 @@ try:
                                                        no_plan_sheet=True)
             continue
         person = personMap[identity]
+        if person.name != name:
+            raise Exception(
+                encode_str('打卡表的人员编号和姓名与排班表不符！编号：' + str(identity) + '，排班表姓名：' + person.name + '，打卡表姓名：' + name))
         person.add_punch(Punch(punchType, punchDatetime))
 
     for person in personMap.values():
@@ -365,8 +373,10 @@ try:
         print(encode_str('无法写入表格文件。请确认已关闭该文件并且有操作权限！'))
         raise
 except Exception, e:
-    s = sys.exc_info()
-    print '%s on punch_check.py line %d' % (s[1], s[2].tb_lineno)
-    print(encode_str('程序异常！'))
+    print(encode_str('程序异常！ ') + e.message)
+    print('')
+    sleep(0.5)
+    traceback.print_exc()
 finally:
+    sleep(1)
     raw_input(encode_str('键入回车退出程序'))
