@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>使用说明</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<style type="text/css">
+/* GitHub stylesheet for MarkdownPad (http://markdownpad.com) */
+/* Author: Nicolas Hery - http://nicolashery.com */
+/* Version: b13fe65ca28d2e568c6ed5d7f06581183df8f2ff */
+/* Source: https://github.com/nicolahery/markdownpad-github */
+
+/* RESET
+=============================================================================*/
+
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* BODY
+=============================================================================*/
+
+body {
+  font-family: Helvetica, arial, freesans, clean, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  background-color: #fff;
+  padding: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+body>*:first-child {
+  margin-top: 0 !important;
+}
+
+body>*:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* BLOCKS
+=============================================================================*/
+
+p, blockquote, ul, ol, dl, table, pre {
+  margin: 15px 0;
+}
+
+/* HEADERS
+=============================================================================*/
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 20px 0 10px;
+  padding: 0;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 tt, h1 code, h2 tt, h2 code, h3 tt, h3 code, h4 tt, h4 code, h5 tt, h5 code, h6 tt, h6 code {
+  font-size: inherit;
+}
+
+h1 {
+  font-size: 28px;
+  color: #000;
+}
+
+h2 {
+  font-size: 24px;
+  border-bottom: 1px solid #ccc;
+  color: #000;
+}
+
+h3 {
+  font-size: 18px;
+}
+
+h4 {
+  font-size: 16px;
+}
+
+h5 {
+  font-size: 14px;
+}
+
+h6 {
+  color: #777;
+  font-size: 14px;
+}
+
+body>h2:first-child, body>h1:first-child, body>h1:first-child+h2, body>h3:first-child, body>h4:first-child, body>h5:first-child, body>h6:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+a:first-child h1, a:first-child h2, a:first-child h3, a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+h1+p, h2+p, h3+p, h4+p, h5+p, h6+p {
+  margin-top: 10px;
+}
+
+/* LINKS
+=============================================================================*/
+
+a {
+  color: #4183C4;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* LISTS
+=============================================================================*/
+
+ul, ol {
+  padding-left: 30px;
+}
+
+ul li > :first-child, 
+ol li > :first-child, 
+ul li ul:first-of-type, 
+ol li ol:first-of-type, 
+ul li ol:first-of-type, 
+ol li ul:first-of-type {
+  margin-top: 0px;
+}
+
+ul ul, ul ol, ol ol, ol ul {
+  margin-bottom: 0;
+}
+
+dl {
+  padding: 0;
+}
+
+dl dt {
+  font-size: 14px;
+  font-weight: bold;
+  font-style: italic;
+  padding: 0;
+  margin: 15px 0 5px;
+}
+
+dl dt:first-child {
+  padding: 0;
+}
+
+dl dt>:first-child {
+  margin-top: 0px;
+}
+
+dl dt>:last-child {
+  margin-bottom: 0px;
+}
+
+dl dd {
+  margin: 0 0 15px;
+  padding: 0 15px;
+}
+
+dl dd>:first-child {
+  margin-top: 0px;
+}
+
+dl dd>:last-child {
+  margin-bottom: 0px;
+}
+
+/* CODE
+=============================================================================*/
+
+pre, code, tt {
+  font-size: 12px;
+  font-family: Consolas, "Liberation Mono", Courier, monospace;
+}
+
+code, tt {
+  margin: 0 0px;
+  padding: 0px 0px;
+  white-space: nowrap;
+  border: 1px solid #eaeaea;
+  background-color: #f8f8f8;
+  border-radius: 3px;
+}
+
+pre>code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent;
+}
+
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  line-height: 19px;
+  overflow: auto;
+  padding: 6px 10px;
+  border-radius: 3px;
+}
+
+pre code, pre tt {
+  background-color: transparent;
+  border: none;
+}
+
+kbd {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background-color: #DDDDDD;
+    background-image: linear-gradient(#F1F1F1, #DDDDDD);
+    background-repeat: repeat-x;
+    border-color: #DDDDDD #CCCCCC #CCCCCC #DDDDDD;
+    border-image: none;
+    border-radius: 2px 2px 2px 2px;
+    border-style: solid;
+    border-width: 1px;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    line-height: 10px;
+    padding: 1px 4px;
+}
+
+/* QUOTES
+=============================================================================*/
+
+blockquote {
+  border-left: 4px solid #DDD;
+  padding: 0 15px;
+  color: #777;
+}
+
+blockquote>:first-child {
+  margin-top: 0px;
+}
+
+blockquote>:last-child {
+  margin-bottom: 0px;
+}
+
+/* HORIZONTAL RULES
+=============================================================================*/
+
+hr {
+  clear: both;
+  margin: 15px 0;
+  height: 0px;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+  border-bottom: 4px solid #ddd;
+  padding: 0;
+}
+
+/* TABLES
+=============================================================================*/
+
+table th {
+  font-weight: bold;
+}
+
+table th, table td {
+  border: 1px solid #ccc;
+  padding: 6px 13px;
+}
+
+table tr {
+  border-top: 1px solid #ccc;
+  background-color: #fff;
+}
+
+table tr:nth-child(2n) {
+  background-color: #f8f8f8;
+}
+
+/* IMAGES
+=============================================================================*/
+
+img {
+  max-width: 100%
+}
+</style>
+</head>
+<body>
+<h2>Punch Check 使用说明</h2>
+<p>版本：0.0.5<br />
+Copyright 2015 yijun.sun</p>
+<hr />
+<h3>快速使用</h3>
+<ol>
+<li>编辑config目录下的“数据配置.ini”文件，根据需要修改年、月和起始月。</li>
+<li>双击运行&quot;punch_check.exe&quot;。</li>
+<li>当提示输入“排班表”时，拖拽排班表文件到运行窗口中，点击运行窗口，键入回车。</li>
+<li>当提示输入“打卡表”时，拖拽打卡表文件到运行窗口中，点击运行窗口，键入回车。</li>
+<li>当提示“处理完毕”，表示处理成功，已生成比对后的文件“排班打卡比对_XXXX年X月.xls”到当前目录。</li>
+<li>根据提示键入回车退出运行窗口。</li>
+</ol>
+<hr />
+<h4>1. 准备待处理文件</h4>
+<p>包括<strong>排班表</strong>和<strong>打卡表</strong>，文件名和路径没有要求。<br />
+文件格式要求详见参考手册“处理文件要求”段。</p>
+<h4>2. 修改配置参数</h4>
+<blockquote>
+<p><em>#开头的为说明文字，与配置无关</em></p>
+</blockquote>
+<ol>
+<li>
+<p><strong>配置考勤时间</strong><br />
+  “config\数据配置.ini”文件右键-编辑，修改“年”、“月”、“起始月”数字，保存，关闭。  
+</p>
+<pre><code>例如：2015年4月考勤周期为3月21号-4月20号
+年 = 2015
+月 = 4
+起始月 = 3
+</code></pre>
+
+</li>
+<li>
+<p><strong>配置使用统一的排班代码</strong><br />
+  “config\数据配置.ini”文件右键-编辑，修改“全局排班”数字为1，保存，关闭。</p>
+<pre><code>修改如下：
+全局排班 = 1
+</code></pre>
+
+</li>
+<li>
+<p><strong>配置使用部门单独的排班代码</strong><br />
+  “config\数据配置.ini”文件右键-编辑，修改“全局排班”数字为0，保存，关闭。</p>
+<pre><code>修改如下：
+全局排班 = 0
+</code></pre>
+
+<blockquote>
+<p><em>统一排班、部门单独排班 只能选择一种</em></p>
+</blockquote>
+</li>
+<li>
+<p><strong>配置排班代码</strong><br />
+  一般不需要修改排班代码。<br />
+  “config\排班代码配置.ini”文件右键-编辑。  
+</p>
+<ul>
+<li>
+<p>修改假别配置：在[请假]下面修改。添加代码则添加一行，修改代码的描述或时间则在原有行做修改，删除代码则将对应行删除即可。</p>
+<pre><code>例如：修改年假的描述为带薪年假，时间为9:00-18:00
+找到原来配置年假的行：N = 年假,5:00-14:00，改为：
+N = 带薪年假,9:00-18:00
+如果需要删除年假，则将N = 年假,5:00-14:00这一行删除。
+</code></pre>
+
+</li>
+<li>
+<p>修改统一的排班代码配置：在[Global]下面修改。添加代码则添加一行，修改代码的描述或时间则在原有行做修改，删除代码则将对应行删除即可。</p>
+<pre><code>例如：修改E班时间时间为14:00-20:00
+找到原本已有E班配置E = 12:00-21:00，那么将本行改为：
+E = 14:00-20:00
+如果原本没有E = 的配置，则在[Global]下面任意添加一行即可。
+</code></pre>
+
+</li>
+<li>
+<p>修改分部门排班代码配置：需要先找到有没有对应的[部门名称]，如果没有，则在文件最后添加[部门名称]，并在后面添加该部门的排班代码配置。如果已有对应的[部门名称]，则在原有[部门名称]后面修改排班代码配置。部门名称与排班表的部门一致。</p>
+<pre><code>例如：添加一个排班表里面的部门“调度”，并添加调度部门的一个排班代码1，时间段为9:00-18:00
+在文件末尾添加：
+[调度]
+1 = 9:00-18:00
+</code></pre>
+
+</li>
+</ul>
+</li>
+</ol>
+<h4>3. 运行程序</h4>
+<p>双击运行&quot;punch_check.exe&quot;。</p>
+<h4>4. 分析输出文件</h4>
+<ol>
+<li>
+<p>查看“考勤异常”Sheet<br />
+  <strong>旷工</strong>或<strong>未登记的请假</strong>：状态列标记为红色，表示一天两次未打卡。</p>
+<blockquote>
+<p>尤其是连续的4行及以上的红色，极可能是请假或离职没有在排班表登记。</p>
+</blockquote>
+</li>
+<li>
+<p>查看“TimeInfo”Sheet：  
+</p>
+<ul>
+<li><strong>排班时间配置可能有误</strong>：出现过多的黄色或紫红色背景，筛选“异常信息”非空白列，如果“排班”集中出现一种排班代码，则可能该代码的时间段配置有误。</li>
+<li><strong>某人排班可能有误</strong>：一个人员的所有排班中连续或集中几行出现黄色背景，则可能该人员的排班信息有误。</li>
+<li><strong>打卡表缺少某人打卡信息</strong>或者<strong>打卡表ERP与排班表不匹配</strong>：连续出现5行以上的紫红色背景。检查如果该人员所有排班行都是紫红色背景，则打卡表中无匹配的ERP。    
+</li>
+</ul>
+<blockquote>
+<p>若对异常情况需要人工判定结果，可以通过链接到“Details”Sheet查看该异常的前一天、当天、后一天的所有打卡记录。</p>
+</blockquote>
+</li>
+<li>
+<p>查看“NotPlan”Sheet：<br />
+  该表格中出现的人员可能是<strong>排班表遗漏人员</strong>，也有可能与<strong>打卡表ERP与排班表不匹配</strong>相关，可以相互参考。  
+</p>
+<blockquote>
+<p>可以通过链接到“Details”Sheet查看该人员的所有打卡记录。</p>
+</blockquote>
+</li>
+</ol>
+
+</body>
+</html>
+<!-- This document was created with MarkdownPad, the Markdown editor for Windows (http://markdownpad.com) -->
