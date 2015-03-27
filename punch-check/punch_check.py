@@ -12,8 +12,9 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 print(encode_str('Copyright 2015 yijun.sun'))
-print(encode_str('Version: 0.0.4'))
+print(encode_str('Version: 0.0.5'))
 print('')
+print(encode_str('请稍后......'))
 
 try:
     from configs import *
@@ -128,10 +129,10 @@ try:
         punchType = read_str_cell(punchSheet, row, punchTypeCol)
         if identity not in personMap.keys():
             if identity not in processedNoPlanName.keys():
-                noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, identity,
+                noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, identity, name,
                                                           department, detailsOutputRow + 1)
                 processedNoPlanName[identity] = noPlanOutputRow
-            detailsOutputRow = write_details_sheet_row(detailsOutputRow, identity, department,
+            detailsOutputRow = write_details_sheet_row(detailsOutputRow, identity, name, department,
                                                        punchDatetime, punchType,
                                                        processedNoPlanName[identity],
                                                        no_plan_sheet=True)
@@ -219,7 +220,7 @@ try:
                         else:
                             break
                     lastRest = person.restDays.get(dates[lastRestDateIndex])
-                    finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
+                    finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
                                                            person.department,
                                                            rest.get_plan_begin_datetime(),
                                                            lastRest.get_plan_end_datetime(),
@@ -236,7 +237,6 @@ try:
             if work.needPunchIn and work.uncertainPunchInList and (not work.have_punch_in() or work.is_punch_in_late()):
                 firstUncertainPunchIn = work.uncertainPunchInList[0]
                 mayBeEarlyPunchOut = None
-                # if work.is_punch_in_late() and can_be_in_out_diff_punch_type(firstUncertainPunchIn, work.punchIn):
                 if work.is_punch_in_late():
                     # 本来是迟到，如果迟到时间和上班时间基本一致，而又离不确定时间不太远，那么不确定时间可以认定为上班打卡来消除迟到
                     # 如果迟到时间和上班时间不一致，就有可能用不确定时间代替原迟到时间，而原迟到时间可能判定为早退时间
@@ -280,7 +280,7 @@ try:
             if work.needPunchIn and not work.have_punch_in() and 0 < index < (len(dates) - 1):
                 exceptionMsg += MSG_NOT_PUNCH_IN + ' / '
                 work.notPunchInRow = finalOutputRow
-                finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
+                finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
                                                        person.department,
                                                        work.get_plan_begin_datetime(),
                                                        work.get_plan_begin_datetime(),
@@ -290,7 +290,7 @@ try:
             if index < (len(dates) - 1) and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 work.notPunchOutRow = finalOutputRow
-                finalOutputRow = write_final_sheet_row(finalOutputRow, person.name,
+                finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
                                                        person.department,
                                                        work.get_plan_end_datetime(),
                                                        work.get_plan_end_datetime(),
@@ -338,7 +338,7 @@ try:
                             if not tomorrowStartRow:
                                 tomorrowStartRow = detailsOutputRow
                             tomorrowEndRow = detailsOutputRow
-                        detailsOutputRow = write_details_sheet_row(detailsOutputRow, person.name,
+                        detailsOutputRow = write_details_sheet_row(detailsOutputRow, person.identity, person.name,
                                                                    person.department,
                                                                    punch.punchDatetime,
                                                                    punch.punchType,
@@ -353,7 +353,7 @@ try:
                     write_details_plan_col(tomorrowStartRow, tomorrowEndRow, tomorrowPlan)
             if not detailsLocateRow:
                 detailsLocateRow = detailsStartRow
-            byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.name,
+            byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.identity, person.name,
                                                       workDate, work.get_punch_in_datetime(),
                                                       work.get_punch_out_datetime(), planType,
                                                       exceptionMsg, detailsLocateRow)
