@@ -13,6 +13,7 @@ sys.setdefaultencoding("utf-8")
 
 print(encode_str('Copyright 2015 yijun.sun'))
 print(encode_str('Version: 0.1.0'))
+print('')
 
 try:
     from configs import *
