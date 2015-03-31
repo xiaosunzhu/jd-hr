@@ -276,7 +276,7 @@ try:
                                 work.uncertainPunchOutList[0].punchDatetime, nextDayWork.get_plan_begin_datetime())
                                                                 and (is_same_time(nextDayWork.get_plan_begin_datetime(),
                                     nextDayWork.get_punch_in_datetime()) or (
-                                uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
+                                        uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
                                 <= (
                                             nextDayWork.get_punch_in_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds))):
                     work.punch(uncertainPunchOutFirstGroup)
@@ -295,7 +295,9 @@ try:
                                                        MSG_NOT_PUNCH, byDateOutputRow + 1)
             elif work.needPunchIn and work.is_punch_in_late():
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
-            if index < (len(dates) - 1) and work.needPunchOut and not work.have_punch_out():
+            if index < (len(dates) - 1) \
+                    and work.validEndDatetime < get_date_time(endDate, time(
+                            6)) and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 work.notPunchOutRow = finalOutputRow
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
