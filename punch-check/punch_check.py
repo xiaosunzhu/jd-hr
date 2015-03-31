@@ -26,8 +26,8 @@ try:
     # planFilePath = planFilePath.replace('"', "")
     # punchFilePath = punchFilePath.replace('"', "")
 
-    planFilePath = encode_str('resources\\3月20运输排班汇总表（单） .xlsx')
-    punchFilePath = encode_str('resources\\打卡记录3月.xlsx')
+    planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
+    punchFilePath = encode_str('resources\\打卡记录4月.xls')
 
     startDateNum = 1
     dateCount = 0
@@ -267,10 +267,18 @@ try:
                             uncertainPunchOutFirstGroup = uncertainPunchOutLast
                         break
                 if not nextDayWork or haveMoreThanOneGroup or (
-                            nextDayWork.have_punch_in() and not nextDayWork.is_punch_in_late()) or (
-                            (work.uncertainPunchOutList[0].punchDatetime - work.get_plan_end_datetime()).seconds <=
-                            (
-                                        nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds):
+                            nextDayWork.have_punch_in() and not nextDayWork.is_punch_in_late()) \
+                        or (not nextDayWork.have_punch_in() and
+                                    (uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
+                                    <= (
+                                            nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds) \
+                        or (nextDayWork.is_punch_in_late() and (can_be_in_out_diff_datetime(
+                                work.uncertainPunchOutList[0].punchDatetime, nextDayWork.get_plan_begin_datetime())
+                                                                and (is_same_time(nextDayWork.get_plan_begin_datetime(),
+                                    nextDayWork.get_punch_in_datetime()) or (
+                                uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
+                                <= (
+                                            nextDayWork.get_punch_in_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds))):
                     work.punch(uncertainPunchOutFirstGroup)
                     if nextDayWork:
                         nextDayWork.remove_processed_uncertain_punch_in(uncertainPunchOutFirstGroup.punchDatetime)
