@@ -363,10 +363,12 @@ try:
                     write_details_plan_col(tomorrowStartRow, tomorrowEndRow, tomorrowPlan)
             if not detailsLocateRow:
                 detailsLocateRow = detailsStartRow
+            haveDoubt = (work.is_punch_in_late() and work.punch_in_too_late()) \
+                        or (work.is_punch_out_early() and work.punch_out_too_early())
             byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.identity, person.name,
                                                       workDate, work.get_punch_in_datetime(),
                                                       work.get_punch_out_datetime(), planType,
-                                                      exceptionMsg, detailsLocateRow)
+                                                      exceptionMsg, haveDoubt, detailsLocateRow)
         # 连续异常加背景色
         for index in range(0, len(dates)):
             currentDate = dates[index]

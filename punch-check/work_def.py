@@ -247,6 +247,12 @@ class WorkDay(object):
         else:
             return get_date_time(self.workDate, self.planWork.get_end_time())
 
+    def punch_in_too_late(self):
+        return can_be_in_out_diff_datetime(self.get_plan_begin_datetime(), self.punchIn.punchDatetime)
+
+    def punch_out_too_early(self):
+        return can_be_in_out_diff_datetime(self.punchOut.punchDatetime, self.get_plan_end_datetime())
+
 
 class RestDay(object):
     def __init__(self, work_date, plan):

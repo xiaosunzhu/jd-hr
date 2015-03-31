@@ -57,6 +57,10 @@ MAGENTA_BG_PATTERN = xlwt.Pattern()
 MAGENTA_BG_PATTERN.pattern = xlwt.Pattern.SOLID_PATTERN
 MAGENTA_BG_PATTERN.pattern_fore_colour = 6  # May be: 8 through 63. 0 = Black, 1 = White, 2 = Red, 3 = Green, 4 = Blue, 5 = Yellow, 6 = Magenta, 7 = Cyan, 16 = Maroon, 17 = Dark Green, 18 = Dark Blue, 19 = Dark Yellow , almost brown), 20 = Dark Magenta, 21 = Teal, 22 = Light Gray, 23 = Dark Gray, the list goes on...
 
+CYAN_BG_PATTERN = xlwt.Pattern()
+CYAN_BG_PATTERN.pattern = xlwt.Pattern.SOLID_PATTERN
+CYAN_BG_PATTERN.pattern_fore_colour = 7  # May be: 8 through 63. 0 = Black, 1 = White, 2 = Red, 3 = Green, 4 = Blue, 5 = Yellow, 6 = Magenta, 7 = Cyan, 16 = Maroon, 17 = Dark Green, 18 = Dark Blue, 19 = Dark Yellow , almost brown), 20 = Dark Magenta, 21 = Teal, 22 = Light Gray, 23 = Dark Gray, the list goes on...
+
 GRAY_BG_PATTERN = xlwt.Pattern()
 GRAY_BG_PATTERN.pattern = xlwt.Pattern.SOLID_PATTERN
 GRAY_BG_PATTERN.pattern_fore_colour = 22  # May be: 8 through 63. 0 = Black, 1 = White, 2 = Red, 3 = Green, 4 = Blue, 5 = Yellow, 6 = Magenta, 7 = Cyan, 16 = Maroon, 17 = Dark Green, 18 = Dark Blue, 19 = Dark Yellow , almost brown), 20 = Dark Magenta, 21 = Teal, 22 = Light Gray, 23 = Dark Gray, the list goes on...
@@ -100,7 +104,7 @@ def write_details_plan_col(start_row, end_row, plan):
     outputDetailsSheet.write_merge(start_row, end_row, 7, 7, str(plan))
 
 
-def write_by_date_sheet_row(row, identity, name, date, punch_in_datetime, punch_out_datetime, plan, msg,
+def write_by_date_sheet_row(row, identity, name, date, punch_in_datetime, punch_out_datetime, plan, msg, doubtful,
                             link_details_sheet_row):
     style = Style.default_style
     origin_pattern = style.pattern
@@ -118,14 +122,6 @@ def write_by_date_sheet_row(row, identity, name, date, punch_in_datetime, punch_
     outputByDateSheet.write(row, 0, identity)
     outputByDateSheet.write(row, 1, name)
     outputByDateSheet.write(row, 2, str(date))
-    if punch_in_datetime:
-        outputByDateSheet.write(row, 3, str(punch_in_datetime.time()))
-    else:
-        outputByDateSheet.write(row, 3, '')
-    if punch_out_datetime:
-        outputByDateSheet.write(row, 4, str(punch_out_datetime.time()))
-    else:
-        outputByDateSheet.write(row, 4, '')
     style.num_format_str = 'h:mm'
     rowNum = str(row + 1)
     outputByDateSheet.write(row, 5, xlwt.Formula(
@@ -134,6 +130,16 @@ def write_by_date_sheet_row(row, identity, name, date, punch_in_datetime, punch_
         '+"24:00:00",E' + rowNum + ')-D' + str(row + 1) + ',"")'))
     style.num_format_str = 'General'
     outputByDateSheet.write(row, 6, str(plan), style)
+    if doubtful:
+        style.pattern = CYAN_BG_PATTERN
+    if punch_in_datetime:
+        outputByDateSheet.write(row, 3, str(punch_in_datetime.time()))
+    else:
+        outputByDateSheet.write(row, 3, '')
+    if punch_out_datetime:
+        outputByDateSheet.write(row, 4, str(punch_out_datetime.time()))
+    else:
+        outputByDateSheet.write(row, 4, '')
     style.pattern = origin_pattern
     return row + 1
 
@@ -257,6 +263,8 @@ style.pattern = MAGENTA_BG_PATTERN
 outputByDateSheet.write(0, 9, '该背景表示未打卡')
 style.pattern = YELLOW_BG_PATTERN
 outputByDateSheet.write(1, 9, '该背景表示迟到/早退')
+style.pattern = CYAN_BG_PATTERN
+outputByDateSheet.write(2, 9, '该背景表示排班可能不符')
 style.pattern = origin_pattern
 
 outputDetailsSheet = outputData.add_sheet('Details')
