@@ -13,21 +13,21 @@ sys.setdefaultencoding("utf-8")
 
 print(encode_str('Copyright 2015 yijun.sun'))
 print(encode_str('Version: 0.1.0'))
-print('')
-print(encode_str('请稍后......'))
 
 try:
     from configs import *
     from sheet_read_write import *
     from work_def import *
 
-    # planFilePath = raw_input(encode_str('排班表：'))
-    # punchFilePath = raw_input(encode_str('打卡表：'))
-    # planFilePath = planFilePath.replace('"', "")
-    # punchFilePath = punchFilePath.replace('"', "")
+    planFilePath = raw_input(encode_str('排班表：'))
+    punchFilePath = raw_input(encode_str('打卡表：'))
+    planFilePath = planFilePath.replace('"', "")
+    punchFilePath = punchFilePath.replace('"', "")
 
-    planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
-    punchFilePath = encode_str('resources\\打卡记录4月.xls')
+    # planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
+    # punchFilePath = encode_str('resources\\打卡记录4月.xls')
+    print('')
+    print(encode_str('请稍后......'))
 
     startDateNum = 1
     dateCount = 0
