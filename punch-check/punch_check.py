@@ -12,9 +12,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 print(encode_str('Copyright 2015 yijun.sun'))
-print(encode_str('Version: 0.0.5'))
-print('')
-print(encode_str('请稍后......'))
+print(encode_str('Version: 0.1.0'))
 
 try:
     from configs import *
@@ -28,6 +26,8 @@ try:
 
     planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
     punchFilePath = encode_str('resources\\打卡记录4月.xls')
+    print('')
+    print(encode_str('请稍后......'))
 
     startDateNum = 1
     dateCount = 0
