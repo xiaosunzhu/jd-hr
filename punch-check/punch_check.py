@@ -47,6 +47,7 @@ try:
     restPlanTimeMap = PLAN_DEPARTMENT_MAP.get(restPlanSection)
     globalPlanTimeMap = PLAN_DEPARTMENT_MAP.get(globalPlanSection)
     haveSetDates = False
+    notSetCode = []
     for row in range(planTablePersonStartRow, planSheet.nrows):
         identity = read_str_cell(planSheet, row, planTableIdentityCol)
         name = read_str_cell(planSheet, row, planTableNameCol)
@@ -80,11 +81,14 @@ try:
             if planType.strip() == '':
                 colNum += 1
                 continue
+            planType = planType.upper()
             planWork = planTimeMap.get(planType)
             if not planWork:
                 planWork = restPlanTimeMap.get(planType)
                 if not planWork:
                     colNum += 1
+                    if planType != notSetRestCode and planType != notSetLeaveCode and planType not in notSetCode:
+                        notSetCode.append(planType.decode("utf-8"))
                     continue
             if planWork.needWork:
                 workPlan = WorkDay(dateTemp, planWork)
@@ -93,6 +97,13 @@ try:
             personMap[identity].add_day_plan(workPlan)
             colNum += 1
         haveSetDates = True
+    notSetCodeStr = ''
+    for code in notSetCode:
+        notSetCodeStr += ' ' + code
+    if notSetCode:
+        print(encode_str("\n排班表中发现未配置的排班代码:"))
+        print(notSetCodeStr + "\n")
+
     dates = sorted(dates)
     oneDate = dates[0]
     lastDate = dates[len(dates) - 1]

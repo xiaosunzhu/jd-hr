@@ -54,6 +54,8 @@ except Exception, e:
 
 restPlanSection = '请假'
 globalPlanSection = 'Global'
+notSetRestCode = '休'
+notSetLeaveCode = '离'
 
 PLAN_DEPARTMENT_MAP = {}
 
