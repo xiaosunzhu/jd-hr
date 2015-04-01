@@ -22,7 +22,7 @@ try:
     startMonth = int(baseConfig.get(encode_str('Base'), encode_str('起始月')).strip())
     useGlobalPan = int(baseConfig.get(encode_str('Swtiches'), encode_str('全局排班')).strip())
 except Exception, e:
-    print(encode_str('数据配置 格式非法！'))
+    print(encode_str('数据配置格式非法！'))
     raise
 
 tableConfig = ConfigParser.ConfigParser()
@@ -49,7 +49,7 @@ try:
     punchPersonStartRow = int(tableConfig.get(encode_str('打卡表'), encode_str('姓名起始行')).strip()) - 1
     punchSheetIndex = int(tableConfig.get(encode_str('打卡表'), encode_str('Sheet')).strip()) - 1
 except Exception, e:
-    print(encode_str('表格配置 格式非法！'))
+    print(encode_str('表格配置格式非法！'))
     raise
 
 restPlanSection = '请假'
@@ -107,5 +107,5 @@ try:
                                                                              acrossDay, needWork)
 
 except Exception, e:
-    print(encode_str('排班代码配置 格式非法！'))
+    print(encode_str('排班代码配置格式非法！'))
     raise
