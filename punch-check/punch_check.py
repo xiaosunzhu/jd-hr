@@ -12,7 +12,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 print(encode_str('Copyright 2015 yijun.sun'))
-print(encode_str('Version: 0.1.0'))
+print(encode_str('Version: 0.1.1'))
 print('')
 
 try:
@@ -27,7 +27,6 @@ try:
 
     # planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
     # punchFilePath = encode_str('resources\\打卡记录4月.xls')
-    print('')
     print(encode_str('请稍后......'))
 
     startDateNum = 1
@@ -47,6 +46,8 @@ try:
     restPlanTimeMap = PLAN_DEPARTMENT_MAP.get(restPlanSection)
     globalPlanTimeMap = PLAN_DEPARTMENT_MAP.get(globalPlanSection)
     haveSetDates = False
+    notSetCode = []
+    repeatedPerson = {}
     for row in range(planTablePersonStartRow, planSheet.nrows):
         identity = read_str_cell(planSheet, row, planTableIdentityCol)
         name = read_str_cell(planSheet, row, planTableNameCol)
@@ -80,19 +81,35 @@ try:
             if planType.strip() == '':
                 colNum += 1
                 continue
+            planType = planType.upper()
             planWork = planTimeMap.get(planType)
             if not planWork:
                 planWork = restPlanTimeMap.get(planType)
                 if not planWork:
                     colNum += 1
+                    if planType != notSetRestCode and planType != notSetLeaveCode and planType not in notSetCode:
+                        notSetCode.append(planType)
                     continue
             if planWork.needWork:
                 workPlan = WorkDay(dateTemp, planWork)
             else:
                 workPlan = RestDay(dateTemp, planWork)
+            if personMap[identity].have_different_planed(dateTemp, planType) and identity not in repeatedPerson.keys():
+                repeatedPerson[identity] = name
             personMap[identity].add_day_plan(workPlan)
             colNum += 1
         haveSetDates = True
+    if notSetCode:
+        notSetCodeStr = ''
+        for code in notSetCode:
+            notSetCodeStr += ' ' + code
+        print(encode_str('\n排班表中发现未配置的排班代码:' + notSetCodeStr + '\n'))
+    if repeatedPerson:
+        repeatedPersonStr = ''
+        for identity in repeatedPerson.keys():
+            repeatedPersonStr += '编号：' + identity + '，姓名：' + repeatedPerson[identity] + '\n'
+        raise SelfException(encode_str('\n排班表中发现重复人员:\n' + repeatedPersonStr))
+
     dates = sorted(dates)
     oneDate = dates[0]
     lastDate = dates[len(dates) - 1]
@@ -140,7 +157,7 @@ try:
             continue
         person = personMap[identity]
         if person.name != name:
-            raise Exception(
+            raise SelfException(
                 encode_str('打卡表的人员编号和姓名与排班表不符！编号：' + str(identity) + '，排班表姓名：' + person.name + '，打卡表姓名：' + name))
         person.add_punch(Punch(punchType, punchDatetime))
 
@@ -386,10 +403,11 @@ try:
         print(encode_str('无法写入表格文件。请确认已关闭该文件并且有操作权限！'))
         raise
 except Exception, e:
-    print(encode_str('程序异常！ ') + e.message)
-    print('')
-    sleep(0.5)
-    traceback.print_exc()
+    print(encode_str('程序异常！ ') + str(e.message))
+    if not isinstance(e, SelfException):
+        sleep(0.2)
+        print('')
+        traceback.print_exc()
 finally:
-    sleep(1)
+    sleep(0.5)
     raw_input(encode_str('键入回车退出程序'))

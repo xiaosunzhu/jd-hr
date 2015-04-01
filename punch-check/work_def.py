@@ -100,6 +100,10 @@ class Person(object):
             day_plan.set_uncertain_punch_out_end_datetime(
                 current_end + timedelta(hours=NO_PLAN_UNCERTAIN_EXPAND_HOURS))
 
+    def have_different_planed(self, date, newPlanCode):
+        return (self.workDays.get(date) and self.workDays.get(date).get_plan_type().name != newPlanCode) \
+               or (self.restDays.get(date) and self.restDays.get(date).get_plan_type().name != newPlanCode)
+
     def add_punch(self, punch):
         self.punches.append(punch)
 
