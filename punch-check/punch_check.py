@@ -155,38 +155,58 @@ try:
         raise
     punchSheet = punchData.sheets()[punchSheetIndex]
     processedNoPlanName = {}
-    for row in range(punchPersonStartRow, punchSheet.nrows):
-        identity = read_str_cell(punchSheet, row, punchTableIdentityCol)
-        name = read_str_cell(punchSheet, row, punchTableNameCol)
-        splits = identity.split(' ')
-        identity = splits[len(splits) - 1]
-        splits = name.split(' ')
-        name = splits[len(splits) - 1]
-        department = read_str_cell(punchSheet, row, punchDepartmentCol)
-        punchDatetime = None
-        if punchSheetDatetimeNotSplit:
-            punchDatetime = read_datetime_cells(punchSheet, punchData.datemode, row, punchDateCol)
+    row = 0
+    dateOrDatetimeCellValid = False
+    timeCellValid = False
+    try:
+        for row in range(punchPersonStartRow, punchSheet.nrows):
+            dateOrDatetimeCellValid = False
+            timeCellValid = False
+            identity = read_str_cell(punchSheet, row, punchTableIdentityCol)
+            name = read_str_cell(punchSheet, row, punchTableNameCol)
+            splits = identity.split(' ')
+            identity = splits[len(splits) - 1]
+            splits = name.split(' ')
+            name = splits[len(splits) - 1]
+            department = read_str_cell(punchSheet, row, punchDepartmentCol)
+            punchDatetime = None
+            if punchSheetDatetimeNotSplit:
+                punchDatetime = read_datetime_cells(punchSheet, punchData.datemode, row,
+                                                    punchDateCol)
+                dateOrDatetimeCellValid = True
+            else:
+                currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
+                dateOrDatetimeCellValid = True
+                currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
+                timeCellValid = True
+                punchDatetime = get_date_time(currentDate, currentTime)
+            punchType = read_str_cell(punchSheet, row, punchTypeCol)
+            if identity not in personMap.keys():
+                if identity not in processedNoPlanName.keys():
+                    noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, identity, name,
+                                                              department, detailsOutputRow + 1)
+                    processedNoPlanName[identity] = noPlanOutputRow
+                detailsOutputRow = write_details_sheet_row(detailsOutputRow, identity, name,
+                                                           department,
+                                                           punchDatetime, punchType,
+                                                           processedNoPlanName[identity],
+                                                           no_plan_sheet=True)
+                continue
+            person = personMap[identity]
+            if person.name != name:
+                raise SelfException(
+                    encode_str('打卡表的人员编号和姓名与排班表不符！编号：' + str(
+                        identity) + '，排班表姓名：' + person.name + '，打卡表姓名：' + name))
+            person.add_punch(Punch(punchType, punchDatetime))
+    except Exception, e:
+        errColName = ''
+        if dateOrDatetimeCellValid:
+            errColName = '时间'
+        elif punchSheetDatetimeNotSplit:
+            errColName = '日期时间'
         else:
-            currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
-            currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
-            punchDatetime = get_date_time(currentDate, currentTime)
-        punchType = read_str_cell(punchSheet, row, punchTypeCol)
-        if identity not in personMap.keys():
-            if identity not in processedNoPlanName.keys():
-                noPlanOutputRow = write_no_plan_sheet_row(noPlanOutputRow, identity, name,
-                                                          department, detailsOutputRow + 1)
-                processedNoPlanName[identity] = noPlanOutputRow
-            detailsOutputRow = write_details_sheet_row(detailsOutputRow, identity, name, department,
-                                                       punchDatetime, punchType,
-                                                       processedNoPlanName[identity],
-                                                       no_plan_sheet=True)
-            continue
-        person = personMap[identity]
-        if person.name != name:
-            raise SelfException(
-                encode_str('打卡表的人员编号和姓名与排班表不符！编号：' + str(
-                    identity) + '，排班表姓名：' + person.name + '，打卡表姓名：' + name))
-        person.add_punch(Punch(punchType, punchDatetime))
+            errColName = '日期'
+        raise SelfException(encode_str('打卡表 第' + str(row + 1) + '行，' + errColName + '列 格式错误'))
 
     for person in personMap.values():
         person.punches = sorted(person.punches,
