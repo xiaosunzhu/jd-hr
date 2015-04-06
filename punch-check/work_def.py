@@ -57,7 +57,8 @@ class Person(object):
         self.department = department
         self.workDays = {}  # Map(date,WorkDay)
         self.restDays = {}  # Map(date,RestDay)
-        self.punches = []  # Map(date,Punch[])
+        self.punches = []  # Punch[]
+        self.punchDatetimeCache = []  # datetime[]
 
     def add_day_plan(self, day_plan):
         if isinstance(day_plan, RestDay):
@@ -105,7 +106,9 @@ class Person(object):
                or (self.restDays.get(date) and self.restDays.get(date).get_plan_type().name != newPlanCode)
 
     def add_punch(self, punch):
-        self.punches.append(punch)
+        if punch.punchDatetime not in self.punchDatetimeCache:
+            self.punchDatetimeCache.append(punch.punchDatetime)
+            self.punches.append(punch)
 
 
 class WorkDay(object):

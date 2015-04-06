@@ -110,22 +110,22 @@ try:
             repeatedPersonStr += '编号：' + identity + '，姓名：' + repeatedPerson[identity] + '\n'
         raise SelfException(encode_str('\n排班表中发现重复人员:\n' + repeatedPersonStr))
 
-    dates = sorted(dates)
+    dates.sort()
     oneDate = dates[0]
     lastDate = dates[len(dates) - 1]
     try:
-        fromDateStr = raw_input(encode_str('排班起始日期为' + str(oneDate) + '，回车确认 或输入起始日期：'))
+        fromDateStr = raw_input(encode_str('排班起始日期为' + str(oneDate) + '，回车确认或输入起始日期：'))
         fromDate = oneDate
         if fromDateStr:
             dateInfoNums = fromDateStr.split('-')
             fromDate = date(int(dateInfoNums[0]), int(dateInfoNums[1]), int(dateInfoNums[2]))
 
-        endDateStr = raw_input(encode_str('排班截止日期为' + str(lastDate) + '，回车确认 或输入截止日期：'))
+        endDateStr = raw_input(encode_str('排班截止日期为' + str(lastDate) + '，回车确认或输入截止日期：'))
         endDate = lastDate
         if endDateStr:
             dateInfoNums = endDateStr.split('-')
             endDate = date(int(dateInfoNums[0]), int(dateInfoNums[1]), int(dateInfoNums[2]))
-    except Exception,e:
+    except Exception, e:
         raise SelfException(encode_str('输入日期格式错误。格式为：年-月-日，如：2015-3-18'))
     print(encode_str('设定的处理时间段为：' + str(fromDate) + ' - ' + str(endDate)))
     print('')
@@ -140,7 +140,7 @@ try:
         if oneDate not in dates:
             dates.append(oneDate)
         oneDate = oneDate + timedelta(days=1)
-    dates = sorted(dates)
+    dates.sort()
 
     detailsOutputRow = 1
     noPlanOutputRow = 1
@@ -189,6 +189,8 @@ try:
         person.add_punch(Punch(punchType, punchDatetime))
 
     for person in personMap.values():
+        person.punches = sorted(person.punches,
+                                cmp=lambda x, y: cmp(x.punchDatetime, y.punchDatetime))
         indexOfPunch = 0
         finishPersonPunchCheck = False
         for currentDate in dates:
@@ -443,5 +445,5 @@ except Exception, e:
         print('')
         traceback.print_exc()
 finally:
-    sleep(0.5)
+    sleep(0.6)
     raw_input(encode_str('键入回车退出程序'))
