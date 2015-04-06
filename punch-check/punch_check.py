@@ -12,7 +12,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 print(encode_str('Copyright 2015 yijun.sun'))
-print(encode_str('Version: 0.1.1'))
+print(encode_str('Version: 0.2.0'))
 print('')
 
 try:
