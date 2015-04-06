@@ -2,7 +2,7 @@
 
 __author__ = 'yijun.sun'
 
-from datetime import time, date
+from datetime import time, date, datetime
 
 import xlrd
 import xlwt
@@ -47,6 +47,12 @@ def read_date_cells(sheet, date_mode, date_row, dat_col):
 def read_time_cells(sheet, date_mode, time_row, time_col):
     time_tuple = xlrd.xldate_as_tuple(sheet.cell(time_row, time_col).value, date_mode)
     return time(*time_tuple[3:])
+
+
+def read_datetime_cells(sheet, date_mode, datetime_row, datetime_col):
+    return xlrd.xldate.xldate_as_datetime(sheet.cell(datetime_row, datetime_col).value,
+                                                date_mode)
+
 
 # 颜色表详见Style.py
 YELLOW_BG_PATTERN = xlwt.Pattern()

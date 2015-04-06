@@ -12,7 +12,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 print(encode_str('Copyright 2015 yijun.sun'))
-print(encode_str('Version: 0.1.1'))
+print(encode_str('Version: 0.2.0'))
 print('')
 
 try:
@@ -27,7 +27,6 @@ try:
 
     # planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
     # punchFilePath = encode_str('resources\\打卡记录4月.xls')
-    print(encode_str('请稍后......'))
 
     startDateNum = 1
     dateCount = 0
@@ -94,7 +93,8 @@ try:
                 workPlan = WorkDay(dateTemp, planWork)
             else:
                 workPlan = RestDay(dateTemp, planWork)
-            if personMap[identity].have_different_planed(dateTemp, planType) and identity not in repeatedPerson.keys():
+            if personMap[identity].have_different_planed(dateTemp,
+                                                         planType) and identity not in repeatedPerson.keys():
                 repeatedPerson[identity] = name
             personMap[identity].add_day_plan(workPlan)
             colNum += 1
@@ -110,15 +110,37 @@ try:
             repeatedPersonStr += '编号：' + identity + '，姓名：' + repeatedPerson[identity] + '\n'
         raise SelfException(encode_str('\n排班表中发现重复人员:\n' + repeatedPersonStr))
 
-    dates = sorted(dates)
+    dates.sort()
     oneDate = dates[0]
     lastDate = dates[len(dates) - 1]
+    try:
+        fromDateStr = raw_input(encode_str('排班起始日期为' + str(oneDate) + '，回车确认或输入起始日期：'))
+        fromDate = oneDate
+        if fromDateStr:
+            dateInfoNums = fromDateStr.split('-')
+            fromDate = date(int(dateInfoNums[0]), int(dateInfoNums[1]), int(dateInfoNums[2]))
+
+        endDateStr = raw_input(encode_str('排班截止日期为' + str(lastDate) + '，回车确认或输入截止日期：'))
+        endDate = lastDate
+        if endDateStr:
+            dateInfoNums = endDateStr.split('-')
+            endDate = date(int(dateInfoNums[0]), int(dateInfoNums[1]), int(dateInfoNums[2]))
+    except Exception, e:
+        raise SelfException(encode_str('输入日期格式错误。格式为：年-月-日，如：2015-3-18'))
+    print(encode_str('设定的处理时间段为：' + str(fromDate) + ' - ' + str(endDate)))
+    print('')
+    print(encode_str('请稍后......'))
+
     dateIndex = 0
-    while oneDate < lastDate:
+    while oneDate <= lastDate:
+        if (oneDate < fromDate or oneDate > endDate) and oneDate in dates:
+            dates.remove(oneDate)
+            oneDate = oneDate + timedelta(days=1)
+            continue
         if oneDate not in dates:
             dates.append(oneDate)
         oneDate = oneDate + timedelta(days=1)
-    dates = sorted(dates)
+    dates.sort()
 
     detailsOutputRow = 1
     noPlanOutputRow = 1
@@ -141,9 +163,13 @@ try:
         splits = name.split(' ')
         name = splits[len(splits) - 1]
         department = read_str_cell(punchSheet, row, punchDepartmentCol)
-        currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
-        currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
-        punchDatetime = get_date_time(currentDate, currentTime)
+        punchDatetime = None
+        if punchSheetDatetimeNotSplit:
+            punchDatetime = read_datetime_cells(punchSheet, punchData.datemode, row, punchDateCol)
+        else:
+            currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
+            currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
+            punchDatetime = get_date_time(currentDate, currentTime)
         punchType = read_str_cell(punchSheet, row, punchTypeCol)
         if identity not in personMap.keys():
             if identity not in processedNoPlanName.keys():
@@ -158,10 +184,13 @@ try:
         person = personMap[identity]
         if person.name != name:
             raise SelfException(
-                encode_str('打卡表的人员编号和姓名与排班表不符！编号：' + str(identity) + '，排班表姓名：' + person.name + '，打卡表姓名：' + name))
+                encode_str('打卡表的人员编号和姓名与排班表不符！编号：' + str(
+                    identity) + '，排班表姓名：' + person.name + '，打卡表姓名：' + name))
         person.add_punch(Punch(punchType, punchDatetime))
 
     for person in personMap.values():
+        person.punches = sorted(person.punches,
+                                cmp=lambda x, y: cmp(x.punchDatetime, y.punchDatetime))
         indexOfPunch = 0
         finishPersonPunchCheck = False
         for currentDate in dates:
@@ -195,7 +224,7 @@ try:
                 break
             while not work.is_after_work_uncertain_time(person.punches[indexOfPunch]):
                 if work.have_punch_out() and (
-                        not can_be_in_out_diff_punch_type(work.punchOut, person.punches[indexOfPunch])):
+                    not can_be_in_out_diff_punch_type(work.punchOut, person.punches[indexOfPunch])):
                     work.punch(person.punches[indexOfPunch])
                 else:
                     work.uncertain_punch_out(person.punches[indexOfPunch])
@@ -238,7 +267,8 @@ try:
                         else:
                             break
                     lastRest = person.restDays.get(dates[lastRestDateIndex])
-                    finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
+                    finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity,
+                                                           person.name,
                                                            person.department,
                                                            rest.get_plan_begin_datetime(),
                                                            lastRest.get_plan_end_datetime(),
@@ -252,7 +282,8 @@ try:
             planType = work.get_plan_type()
 
             # 补充确定先前不确定的打卡记录
-            if work.needPunchIn and work.uncertainPunchInList and (not work.have_punch_in() or work.is_punch_in_late()):
+            if work.needPunchIn and work.uncertainPunchInList and (
+                    not work.have_punch_in() or work.is_punch_in_late()):
                 firstUncertainPunchIn = work.uncertainPunchInList[0]
                 mayBeEarlyPunchOut = None
                 if work.is_punch_in_late():
@@ -271,7 +302,7 @@ try:
                 if mayBeEarlyPunchOut:
                     work.punch(mayBeEarlyPunchOut)
             if work.needPunchOut and work.uncertainPunchOutList and (
-                        not work.have_punch_out() or work.is_punch_out_early()):
+                    not work.have_punch_out() or work.is_punch_out_early()):
                 uncertainPunchOutFirstGroup = work.uncertainPunchOutList[0]
                 uncertainPunchOutLast = work.uncertainPunchOutList[
                     len(work.uncertainPunchOutList) - 1]
@@ -285,21 +316,25 @@ try:
                             uncertainPunchOutFirstGroup = uncertainPunchOutLast
                         break
                 if not nextDayWork or haveMoreThanOneGroup or (
-                            nextDayWork.have_punch_in() and not nextDayWork.is_punch_in_late()) \
-                        or (not nextDayWork.have_punch_in() and
-                                    (uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
-                                    <= (
-                                            nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds) \
-                        or (nextDayWork.is_punch_in_late() and (can_be_in_out_diff_datetime(
-                                work.uncertainPunchOutList[0].punchDatetime, nextDayWork.get_plan_begin_datetime())
-                                                                and (is_same_time(nextDayWork.get_plan_begin_datetime(),
-                                    nextDayWork.get_punch_in_datetime()) or (
+                        nextDayWork.have_punch_in() and not nextDayWork.is_punch_in_late()) \
+                    or (not nextDayWork.have_punch_in() and
+                                (
                                         uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
                                 <= (
+                                    nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds) \
+                    or (nextDayWork.is_punch_in_late() and (can_be_in_out_diff_datetime(
+                                work.uncertainPunchOutList[0].punchDatetime,
+                                nextDayWork.get_plan_begin_datetime())
+                                                            and (
+                                    is_same_time(nextDayWork.get_plan_begin_datetime(),
+                                                 nextDayWork.get_punch_in_datetime()) or (
+                                        uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
+                                    <= (
                                             nextDayWork.get_punch_in_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds))):
                     work.punch(uncertainPunchOutFirstGroup)
                     if nextDayWork:
-                        nextDayWork.remove_processed_uncertain_punch_in(uncertainPunchOutFirstGroup.punchDatetime)
+                        nextDayWork.remove_processed_uncertain_punch_in(
+                            uncertainPunchOutFirstGroup.punchDatetime)
                         # 补充确定先前不确定的打卡记录
 
             exceptionMsg = ''
@@ -314,7 +349,7 @@ try:
             elif work.needPunchIn and work.is_punch_in_late():
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
             if index < (len(dates) - 1) \
-                    and work.validEndDatetime < get_date_time(endDate, time(
+                and work.validEndDatetime < get_date_time(endDate, time(
                             6)) and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 work.notPunchOutRow = finalOutputRow
@@ -346,10 +381,10 @@ try:
                 tomorrowEndRow = None
                 for punch in person.punches:
                     if not punch.notReal and not punch.outputToDetails and (
-                                    (index > 0 and punch.punchDatetime.date() == dates[index - 1]) or
-                                        punch.punchDatetime.date() == currentDate or
-                                (index < (len(dates) - 1) and punch.punchDatetime.date() == dates[
-                                        index + 1])):
+                                (index > 0 and punch.punchDatetime.date() == dates[index - 1]) or
+                                    punch.punchDatetime.date() == currentDate or
+                            (index < (len(dates) - 1) and punch.punchDatetime.date() == dates[
+                                    index + 1])):
                         if not detailsLocateRow and punch.punchDatetime.date() == currentDate:
                             detailsLocateRow = detailsOutputRow + 1
                         if not detailsLocateRow and punch.punchDatetime.date() > currentDate:
@@ -366,7 +401,8 @@ try:
                             if not tomorrowStartRow:
                                 tomorrowStartRow = detailsOutputRow
                             tomorrowEndRow = detailsOutputRow
-                        detailsOutputRow = write_details_sheet_row(detailsOutputRow, person.identity, person.name,
+                        detailsOutputRow = write_details_sheet_row(detailsOutputRow,
+                                                                   person.identity, person.name,
                                                                    person.department,
                                                                    punch.punchDatetime,
                                                                    punch.punchType,
@@ -382,12 +418,12 @@ try:
             if not detailsLocateRow:
                 detailsLocateRow = detailsStartRow
             haveDoubt = (work.is_punch_in_late() and work.punch_in_too_late()) \
-                        or (work.is_punch_out_early() and work.punch_out_too_early())
+                or (work.is_punch_out_early() and work.punch_out_too_early())
             byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.identity, person.name,
                                                       workDate, work.get_punch_in_datetime(),
                                                       work.get_punch_out_datetime(), planType,
                                                       exceptionMsg, haveDoubt, detailsLocateRow)
-        # 连续异常加背景色
+            # 连续异常加背景色
         for index in range(0, len(dates)):
             currentDate = dates[index]
             work = person.workDays.get(currentDate)
@@ -409,5 +445,5 @@ except Exception, e:
         print('')
         traceback.print_exc()
 finally:
-    sleep(0.5)
+    sleep(0.6)
     raw_input(encode_str('键入回车退出程序'))

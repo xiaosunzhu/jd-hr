@@ -21,6 +21,8 @@ try:
     month = int(baseConfig.get(encode_str('Base'), encode_str('月')).strip())
     startMonth = int(baseConfig.get(encode_str('Base'), encode_str('起始月')).strip())
     useGlobalPan = int(baseConfig.get(encode_str('Swtiches'), encode_str('全局排班')).strip())
+    punchSheetDatetimeNotSplit = int(baseConfig.get(encode_str('Swtiches'),
+                                            encode_str('打卡日期时间不拆分')).strip())
 except Exception, e:
     print(encode_str('数据配置格式非法！'))
     raise
