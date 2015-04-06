@@ -200,13 +200,20 @@ try:
             person.add_punch(Punch(punchType, punchDatetime))
     except Exception, e:
         errColName = ''
+        splitMsgHint = ''
+        if punchSheetDatetimeNotSplit:
+            splitMsgHint = '合并'
+        else:
+            splitMsgHint = '拆分'
         if dateOrDatetimeCellValid:
             errColName = '时间'
         elif punchSheetDatetimeNotSplit:
             errColName = '日期时间'
         else:
             errColName = '日期'
-        raise SelfException(encode_str('打卡表 第' + str(row + 1) + '行，' + errColName + '列 格式错误'))
+        raise SelfException(
+            encode_str('打卡表采用日期时间' + splitMsgHint + '方式。第' + str(row + 1) + '行，' + errColName +
+                       '列 格式错误'))
 
     for person in personMap.values():
         person.punches = sorted(person.punches,
@@ -460,9 +467,9 @@ try:
         raise
 except Exception, e:
     print(encode_str('程序异常！ ') + str(e.message))
+    print('')
     if not isinstance(e, SelfException):
         sleep(0.2)
-        print('')
         traceback.print_exc()
 finally:
     sleep(0.6)
