@@ -114,20 +114,19 @@ try:
     oneDate = dates[0]
     lastDate = dates[len(dates) - 1]
     try:
-        fromDateStr = raw_input(encode_str('排班起始日期为' + str(oneDate) + '，回车确认或输入指定日期：'))
+        fromDateStr = raw_input(encode_str('排班起始日期为' + str(oneDate) + '，回车确认 或输入起始日期：'))
         fromDate = oneDate
         if fromDateStr:
             dateInfoNums = fromDateStr.split('-')
             fromDate = date(int(dateInfoNums[0]), int(dateInfoNums[1]), int(dateInfoNums[2]))
 
-        endDateStr = raw_input(encode_str('排班截止日期为' + str(lastDate) + '，回车确认或输入指定日期：'))
+        endDateStr = raw_input(encode_str('排班截止日期为' + str(lastDate) + '，回车确认 或输入截止日期：'))
         endDate = lastDate
         if endDateStr:
             dateInfoNums = endDateStr.split('-')
             endDate = date(int(dateInfoNums[0]), int(dateInfoNums[1]), int(dateInfoNums[2]))
     except Exception,e:
-        print(encode_str('排班表是已损坏的excel文件！\n文件路径：') + planFilePath)
-        raise SelfException('输入日期格式错误。格式为：年-月-日，如：2015-3-18')
+        raise SelfException(encode_str('输入日期格式错误。格式为：年-月-日，如：2015-3-18'))
     print(encode_str('设定的处理时间段为：' + str(fromDate) + ' - ' + str(endDate)))
     print('')
     print(encode_str('请稍后......'))
@@ -164,9 +163,13 @@ try:
         splits = name.split(' ')
         name = splits[len(splits) - 1]
         department = read_str_cell(punchSheet, row, punchDepartmentCol)
-        currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
-        currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
-        punchDatetime = get_date_time(currentDate, currentTime)
+        punchDatetime = None
+        if punchSheetDatetimeNotSplit:
+            punchDatetime = read_datetime_cells(punchSheet, punchData.datemode, row, punchDateCol)
+        else:
+            currentDate = read_date_cells(punchSheet, punchData.datemode, row, punchDateCol)
+            currentTime = read_time_cells(punchSheet, punchData.datemode, row, punchTimeCol)
+            punchDatetime = get_date_time(currentDate, currentTime)
         punchType = read_str_cell(punchSheet, row, punchTypeCol)
         if identity not in personMap.keys():
             if identity not in processedNoPlanName.keys():
