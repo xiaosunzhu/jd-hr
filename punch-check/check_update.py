@@ -48,7 +48,8 @@ def process_result(content):
 def request_to_github():
     try:
         request = urllib2.Request('https://api.github.com/repos/xiaosunzhu/jd-hr/releases/latest')
-        request.add_header('Authorization', 'token 05a5a84f2f3f3099792a51307338cecfae29efdc')
+        # request.add_header('Authorization', 'token 05a5a84f2f3f3099792a51307338cecfae29efdc')
+        request.add_header('Authorization', 'token 2c9b22c566176d9e82401964f4fd10183ce41f6c')
         request.add_header('cache-control', 'no-cache')
         print(encode_str('检查更新中......'))
         response = urllib2.urlopen(request, timeout=7)
