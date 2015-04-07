@@ -2,6 +2,9 @@
 from time import sleep
 import traceback
 
+from check_update import request_to_github
+
+
 __author__ = 'yijun.sun'
 
 import sys
@@ -12,10 +15,15 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 print(encode_str('Copyright 2015 yijun.sun'))
-print(encode_str('Version: 0.2.0'))
+print(encode_str('Version: ' + CURRENT_VERSION))
 print('')
 
 try:
+    result = request_to_github()
+    if result:
+        print(encode_str('*** 如需更新软件，请运行update.exe ***'))
+        print('')
+
     from configs import *
     from sheet_read_write import *
     from work_def import *
