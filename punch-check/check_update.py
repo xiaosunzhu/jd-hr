@@ -2,8 +2,10 @@
 from _ssl import SSLError
 import os
 import shutil
+import urllib
 import urllib2
 import zipfile
+import sys
 
 from base import encode_str, CURRENT_VERSION
 
@@ -48,9 +50,8 @@ def process_result(content):
 def request_to_github():
     try:
         request = urllib2.Request('https://api.github.com/repos/xiaosunzhu/jd-hr/releases/latest')
-        # request.add_header('Authorization', 'token 05a5a84f2f3f3099792a51307338cecfae29efdc')
-        request.add_header('Authorization', 'token 2c9b22c566176d9e82401964f4fd10183ce41f6c')
-        request.add_header('cache-control', 'no-cache')
+        # request.add_header('Authorization', 'token ' + token)
+        # request.add_header('cache-control', 'no-cache')
         print(encode_str('检查更新中......'))
         response = urllib2.urlopen(request, timeout=7)
         return process_result(eval(response.read()))
@@ -62,11 +63,21 @@ def request_to_github():
         print(encode_str('检查更新读取失败：' + e.reason.message))
 
 
+def report(count, block_size, total_size):
+    percent = int(count * block_size * 100 / total_size)
+    sys.stdout.write(encode_str("\r已下载 %d%%" % percent))
+    sys.stdout.flush()
+
+
 def update(file_name, download_url):
-    f = urllib2.urlopen(download_url)
-    with open(file_name + '.temp', "wb") as temp_file:
-        temp_file.write(f.read())
     zip_temp_file_name = file_name + '.temp'
+    try:
+        urllib.urlretrieve(download_url, zip_temp_file_name, reporthook=report)
+        print('')
+    except Exception, e:
+        print(encode_str('下载新版本失败。' + e.message))
+        return
+
     zip_file = zipfile.ZipFile(zip_temp_file_name, mode='r')
     dir_name = 'new_version'
     try:
