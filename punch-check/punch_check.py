@@ -28,13 +28,13 @@ try:
     from sheet_read_write import *
     from work_def import *
 
-    # planFilePath = raw_input(encode_str('排班表：'))
-    # punchFilePath = raw_input(encode_str('打卡表：'))
-    # planFilePath = planFilePath.replace('"', "")
-    # punchFilePath = punchFilePath.replace('"', "")
+    planFilePath = raw_input(encode_str('排班表：'))
+    punchFilePath = raw_input(encode_str('打卡表：'))
+    planFilePath = planFilePath.replace('"', "")
+    punchFilePath = punchFilePath.replace('"', "")
 
-    planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
-    punchFilePath = encode_str('resources\\打卡记录4月.xls')
+    # planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
+    # punchFilePath = encode_str('resources\\打卡记录4月.xls')
 
     startDateNum = 1
     dateCount = 0
