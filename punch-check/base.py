@@ -4,7 +4,7 @@ __author__ = 'Administrator'
 
 SYSTEM_ENCODING = 'GBK'
 
-CURRENT_VERSION = 'release-0.2.0'
+CURRENT_VERSION = 'release-0.2.1'
 
 
 def encode_str(string):
