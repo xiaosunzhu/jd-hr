@@ -35,7 +35,7 @@ def process_result(content):
     if new_version_code <= current_version_code:
         print(encode_str('已是最新版本，不需要更新'))
         return
-    if new_version_code - current_version_code >= 100:
+    if new_version_code // 100 > current_version_code // 100:
         print(encode_str('有重要的新版本：' + content['tag_name']))
     else:
         print(encode_str('有可用的新版本：' + content['tag_name']))
