@@ -163,8 +163,11 @@ def write_final_sheet_row(row, identity, name, department, leave_start, leave_en
     outputFinalSheet.write(row, 2, name)
     outputFinalSheet.write(row, 3, department)
     outputFinalSheet.write(row, 4, '')
-    outputFinalSheet.write(row, 5, str(leave_start))
-    outputFinalSheet.write(row, 6, str(leave_end))
+    origin_format = style.num_format_str
+    style.num_format_str = 'yyyy/m/d h:mm AM/PM'
+    outputFinalSheet.write(row, 5, leave_start)
+    outputFinalSheet.write(row, 6, leave_end)
+    style.num_format_str = origin_format
     outputFinalSheet.write(row, 7, type)
     if type == MSG_NOT_PUNCH:
         timePeriod = 0.0
