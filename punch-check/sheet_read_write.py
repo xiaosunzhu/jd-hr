@@ -2,7 +2,7 @@
 
 __author__ = 'yijun.sun'
 
-from datetime import time, date, datetime
+from datetime import time, date
 
 import xlrd
 import xlwt
@@ -12,6 +12,7 @@ from work_def import STRING_TYPE, FLOAT_TYPE
 
 
 MSG_NOT_PUNCH = '未打卡'
+MSG_NOT_PUNCH_BOTH = '旷工'
 MSG_NOT_PUNCH_IN = '上班' + MSG_NOT_PUNCH
 MSG_NOT_PUNCH_OUT = '下班' + MSG_NOT_PUNCH
 MSG_PUNCH_IN_LATE = '迟到'
@@ -51,7 +52,7 @@ def read_time_cells(sheet, date_mode, time_row, time_col):
 
 def read_datetime_cells(sheet, date_mode, datetime_row, datetime_col):
     return xlrd.xldate.xldate_as_datetime(sheet.cell(datetime_row, datetime_col).value,
-                                                date_mode)
+                                          date_mode)
 
 
 # 颜色表详见Style.py
@@ -186,8 +187,11 @@ def write_final_sheet_bg(*rows):
     style = Style.default_style
     origin_pattern = style.pattern
     style.pattern = RED_BG_PATTERN
-    for row in rows:
-        outputFinalSheet.write(row, 11, '')
+    if rows[0] == rows[1]:
+        outputFinalSheet.write(rows[0], 11, '')
+    else:
+        for row in rows:
+            outputFinalSheet.write(row, 11, '')
     style.pattern = origin_pattern
 
 

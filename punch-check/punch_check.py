@@ -28,13 +28,13 @@ try:
     from sheet_read_write import *
     from work_def import *
 
-    planFilePath = raw_input(encode_str('排班表：'))
-    punchFilePath = raw_input(encode_str('打卡表：'))
-    planFilePath = planFilePath.replace('"', "")
-    punchFilePath = punchFilePath.replace('"', "")
+    # planFilePath = raw_input(encode_str('排班表：'))
+    # punchFilePath = raw_input(encode_str('打卡表：'))
+    # planFilePath = planFilePath.replace('"', "")
+    # punchFilePath = punchFilePath.replace('"', "")
 
-    # planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
-    # punchFilePath = encode_str('resources\\打卡记录4月.xls')
+    planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
+    punchFilePath = encode_str('resources\\打卡记录4月.xls')
 
     startDateNum = 1
     dateCount = 0
@@ -376,11 +376,6 @@ try:
             if work.needPunchIn and not work.have_punch_in() and 0 < index < (len(dates) - 1):
                 exceptionMsg += MSG_NOT_PUNCH_IN + ' / '
                 work.notPunchInRow = finalOutputRow
-                finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
-                                                       person.department,
-                                                       work.get_plan_begin_datetime(),
-                                                       work.get_plan_begin_datetime(),
-                                                       MSG_NOT_PUNCH, byDateOutputRow + 1)
             elif work.needPunchIn and work.is_punch_in_late():
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
             if index < (len(dates) - 1) \
@@ -388,13 +383,26 @@ try:
                             6)) and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 work.notPunchOutRow = finalOutputRow
+            elif work.needPunchOut and work.is_punch_out_early():
+                exceptionMsg += MSG_PUNCH_OUT_EARLY + ' / '
+            if work.notPunchInRow and work.notPunchOutRow:
+                finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
+                                                       person.department,
+                                                       work.get_plan_begin_datetime(),
+                                                       work.get_plan_end_datetime(),
+                                                       MSG_NOT_PUNCH_BOTH, byDateOutputRow + 1)
+            elif work.notPunchInRow:
+                finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
+                                                       person.department,
+                                                       work.get_plan_begin_datetime(),
+                                                       work.get_plan_begin_datetime(),
+                                                       MSG_NOT_PUNCH, byDateOutputRow + 1)
+            elif work.notPunchOutRow:
                 finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
                                                        person.department,
                                                        work.get_plan_end_datetime(),
                                                        work.get_plan_end_datetime(),
                                                        MSG_NOT_PUNCH, byDateOutputRow + 1)
-            elif work.needPunchOut and work.is_punch_out_early():
-                exceptionMsg += MSG_PUNCH_OUT_EARLY + ' / '
             detailsStartRow = detailsOutputRow + 1
             detailsLocateRow = None
             if exceptionMsg:
