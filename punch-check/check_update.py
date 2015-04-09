@@ -93,6 +93,8 @@ def update(file_name, download_url):
                 os.remove(old_file_name)
             shutil.copyfile(file_name, old_file_name)
         print(encode_str('更新已完成，当前版本为：' + CURRENT_VERSION))
+    except Exception:
+        print('无法覆盖旧版本，请检查已关闭punch_check.exe运行程序及其他配置文件后再进行更新')
     finally:
         zip_file.close()
         try:

@@ -17,8 +17,9 @@ try:
     result = request_to_github()
     if result:
         print('')
-        enter = raw_input(encode_str('回车进行更新或输入n回车退出:'))
+        enter = raw_input(encode_str('回车进行更新或输入n回车退出:\n(注意：请检查已关闭punch_check.exe运行程序及其他配置文件)\n'))
         if enter != 'n':
+            print(encode_str(''))
             print(encode_str('正在更新，请耐心等待......'))
             update(result[0], result[1])
 except Exception, e:
