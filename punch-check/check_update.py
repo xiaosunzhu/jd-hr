@@ -76,6 +76,8 @@ def update(file_name, download_url):
         print('')
     except Exception, e:
         print(encode_str('下载新版本失败，请稍后再试：' + e.message))
+        if os.path.exists(zip_temp_file_name):
+            os.remove(zip_temp_file_name)
         return
 
     zip_file = zipfile.ZipFile(zip_temp_file_name, mode='r')
@@ -87,14 +89,14 @@ def update(file_name, download_url):
             if not os.path.isfile(file_name):
                 continue
             old_file_name = file[file.index('/') + 1:]
-            if old_file_name == 'update.exe':
+            if old_file_name == 'update.exe' or old_file_name.endswith('.ini'):
                 continue
             if os.path.exists(old_file_name):
                 os.remove(old_file_name)
             shutil.copyfile(file_name, old_file_name)
         print(encode_str('更新已完成，当前版本为：' + CURRENT_VERSION))
     except Exception:
-        print('无法覆盖旧版本，请检查已关闭punch_check.exe运行程序及其他配置文件后再进行更新')
+        print(encode_str('无法覆盖旧版本，请检查已关闭punch_check.exe运行程序及其他配置文件后再进行更新'))
     finally:
         zip_file.close()
         try:
