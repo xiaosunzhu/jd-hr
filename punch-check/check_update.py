@@ -58,9 +58,9 @@ def request_to_github():
     except urllib2.HTTPError, e:
         print(encode_str('检查更新发生错误，Github响应状态：' + str(e.code)))
     except urllib2.URLError, e:
-        print(encode_str('检查更新连接服务失败：' + e.reason.message))
+        print(encode_str('检查更新连接服务失败，请稍后再试：' + e.reason.message))
     except SSLError, e:
-        print(encode_str('检查更新读取失败：' + e.reason.message))
+        print(encode_str('检查更新读取失败，请稍后再试：' + e.reason.message))
 
 
 def report(count, block_size, total_size):
@@ -75,7 +75,7 @@ def update(file_name, download_url):
         urllib.urlretrieve(download_url, zip_temp_file_name, reporthook=report)
         print('')
     except Exception, e:
-        print(encode_str('下载新版本失败。' + e.message))
+        print(encode_str('下载新版本失败，请稍后再试：' + e.message))
         return
 
     zip_file = zipfile.ZipFile(zip_temp_file_name, mode='r')
@@ -83,7 +83,7 @@ def update(file_name, download_url):
     try:
         zip_file.extractall(dir_name)
         for file in zip_file.namelist():
-            file_name = dir_name + '/' + file
+            file_name = dir_name + os.path.sep + file
             if not os.path.isfile(file_name):
                 continue
             old_file_name = file[file.index('/') + 1:]
@@ -92,9 +92,29 @@ def update(file_name, download_url):
             if os.path.exists(old_file_name):
                 os.remove(old_file_name)
             shutil.copyfile(file_name, old_file_name)
+        print(encode_str('更新已完成，当前版本为：' + CURRENT_VERSION))
     finally:
         zip_file.close()
-        if os.path.exists(dir_name):
-            shutil.rmtree(dir_name)
-        if os.path.exists(zip_temp_file_name):
-            os.remove(zip_temp_file_name)
+        try:
+            if os.path.exists(dir_name):
+                try:
+                    shutil.rmtree(dir_name)
+                except WindowsError:
+                    if os.path.isdir(dir_name):
+                        os.path.walk(dir_name, delete_files, ())
+            if os.path.exists(zip_temp_file_name):
+                os.remove(zip_temp_file_name)
+        except Exception:
+            print('清理临时文件失败但不影响正常使用')
+
+
+def delete_files(arg, current_dir, files):
+    for file in files:
+        if os.path.isdir(current_dir + os.path.sep + file):
+            os.path.walk(current_dir + os.path.sep + file, delete_files, ())
+        elif os.path.isfile(current_dir + os.path.sep + file):
+            os.remove(current_dir + os.path.sep + file)
+    if os.path.isdir(current_dir):
+        os.rmdir(current_dir)
+    elif os.path.isfile(current_dir):
+        os.remove(current_dir)
