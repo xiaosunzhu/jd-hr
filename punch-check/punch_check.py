@@ -33,8 +33,8 @@ try:
     # planFilePath = planFilePath.replace('"', "")
     # punchFilePath = punchFilePath.replace('"', "")
 
-    planFilePath = encode_str('resources\\4月运输排班汇总表（单） .xlsx')
-    punchFilePath = encode_str('resources\\打卡记录4月.xls')
+    planFilePath = encode_str('resources\\3月排班表_仓库.xlsx')
+    punchFilePath = encode_str('resources\\3月指纹_仓库.xls')
 
     startDateNum = 1
     dateCount = 0
@@ -88,7 +88,7 @@ try:
             if planType.strip() == '':
                 colNum += 1
                 continue
-            planType = planType.upper()
+            planType = planType.upper().strip()
             planWork = planTimeMap.get(planType)
             if not planWork:
                 planWork = restPlanTimeMap.get(planType)

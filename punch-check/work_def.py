@@ -271,6 +271,9 @@ class RestDay(object):
         self.plan = plan  # PlanType
         self.haveOutput = False
 
+    def get_plan_type(self):
+        return self.plan
+
     def mark_output(self):
         self.haveOutput = True
 
