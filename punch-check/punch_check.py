@@ -94,7 +94,7 @@ try:
                 planWork = restPlanTimeMap.get(planType)
                 if not planWork:
                     colNum += 1
-                    if planType != notSetRestCode and planType != notSetLeaveCode and planType not in notSetCode:
+                    if planType not in notSetCode:
                         notSetCode.append(planType)
                     continue
             if planWork.needWork:
@@ -259,7 +259,7 @@ try:
                 break
             while not work.is_after_work_uncertain_time(person.punches[indexOfPunch]):
                 if work.have_punch_out() and (
-                    not can_be_in_out_diff_punch_type(work.punchOut, person.punches[indexOfPunch])):
+                        not can_be_in_out_diff_punch_type(work.punchOut, person.punches[indexOfPunch])):
                     work.punch(person.punches[indexOfPunch])
                 else:
                     work.uncertain_punch_out(person.punches[indexOfPunch])
@@ -289,7 +289,7 @@ try:
                 nextDayWork = person.workDays.get(dates[index + 1])
 
             if rest:
-                if not rest.haveOutput:
+                if not rest.haveOutput and rest.get_plan_begin_datetime() and rest.get_plan_end_datetime():
                     lastRestDateIndex = index
                     rest.mark_output()
                     restDayCount = 1
@@ -318,7 +318,7 @@ try:
 
             # 补充确定先前不确定的打卡记录
             if work.needPunchIn and work.uncertainPunchInList and (
-                    not work.have_punch_in() or work.is_punch_in_late()):
+                        not work.have_punch_in() or work.is_punch_in_late()):
                 firstUncertainPunchIn = work.uncertainPunchInList[0]
                 mayBeEarlyPunchOut = None
                 if work.is_punch_in_late():
@@ -337,7 +337,7 @@ try:
                 if mayBeEarlyPunchOut:
                     work.punch(mayBeEarlyPunchOut)
             if work.needPunchOut and work.uncertainPunchOutList and (
-                    not work.have_punch_out() or work.is_punch_out_early()):
+                        not work.have_punch_out() or work.is_punch_out_early()):
                 uncertainPunchOutFirstGroup = work.uncertainPunchOutList[0]
                 uncertainPunchOutLast = work.uncertainPunchOutList[
                     len(work.uncertainPunchOutList) - 1]
@@ -351,21 +351,21 @@ try:
                             uncertainPunchOutFirstGroup = uncertainPunchOutLast
                         break
                 if not nextDayWork or haveMoreThanOneGroup or (
-                        nextDayWork.have_punch_in() and not nextDayWork.is_punch_in_late()) \
-                    or (not nextDayWork.have_punch_in() and
-                                (
-                                        uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
-                                <= (
-                                    nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds) \
-                    or (nextDayWork.is_punch_in_late() and (can_be_in_out_diff_datetime(
+                            nextDayWork.have_punch_in() and not nextDayWork.is_punch_in_late()) \
+                        or (not nextDayWork.have_punch_in() and
+                                    (
+                                                uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
+                                    <= (
+                                            nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds) \
+                        or (nextDayWork.is_punch_in_late() and (can_be_in_out_diff_datetime(
                                 work.uncertainPunchOutList[0].punchDatetime,
                                 nextDayWork.get_plan_begin_datetime())
-                                                            and (
-                                    is_same_time(nextDayWork.get_plan_begin_datetime(),
-                                                 nextDayWork.get_punch_in_datetime()) or (
-                                        uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
-                                    <= (
-                                            nextDayWork.get_punch_in_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds))):
+                                                                and (
+                                        is_same_time(nextDayWork.get_plan_begin_datetime(),
+                                                nextDayWork.get_punch_in_datetime()) or (
+                                                uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
+                                        <= (
+                                                    nextDayWork.get_punch_in_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds))):
                     work.punch(uncertainPunchOutFirstGroup)
                     if nextDayWork:
                         nextDayWork.remove_processed_uncertain_punch_in(
@@ -379,7 +379,7 @@ try:
             elif work.needPunchIn and work.is_punch_in_late():
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
             if index < (len(dates) - 1) \
-                and work.validEndDatetime < get_date_time(endDate, time(
+                    and work.validEndDatetime < get_date_time(endDate, time(
                             6)) and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 work.notPunchOutRow = finalOutputRow
@@ -424,10 +424,10 @@ try:
                 tomorrowEndRow = None
                 for punch in person.punches:
                     if not punch.notReal and not punch.outputToDetails and (
-                                (index > 0 and punch.punchDatetime.date() == dates[index - 1]) or
-                                    punch.punchDatetime.date() == currentDate or
-                            (index < (len(dates) - 1) and punch.punchDatetime.date() == dates[
-                                    index + 1])):
+                                    (index > 0 and punch.punchDatetime.date() == dates[index - 1]) or
+                                        punch.punchDatetime.date() == currentDate or
+                                (index < (len(dates) - 1) and punch.punchDatetime.date() == dates[
+                                        index + 1])):
                         if not detailsLocateRow and punch.punchDatetime.date() == currentDate:
                             detailsLocateRow = detailsOutputRow + 1
                         if not detailsLocateRow and punch.punchDatetime.date() > currentDate:
@@ -461,7 +461,7 @@ try:
             if not detailsLocateRow:
                 detailsLocateRow = detailsStartRow
             haveDoubt = (work.is_punch_in_late() and work.punch_in_too_late()) \
-                or (work.is_punch_out_early() and work.punch_out_too_early())
+                        or (work.is_punch_out_early() and work.punch_out_too_early())
             byDateOutputRow = write_by_date_sheet_row(byDateOutputRow, person.identity, person.name,
                                                       workDate, work.get_punch_in_datetime(),
                                                       work.get_punch_out_datetime(), planType,

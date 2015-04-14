@@ -24,7 +24,7 @@ class PlanType(object):
         self.acrossDay = across_day
         self.beginTime = begin_time
         self.endTime = end_time
-        if begin_time == None or end_time == None:
+        if begin_time is None or end_time is None:
             self.needWork = False
         else:
             self.needWork = need_work
@@ -246,9 +246,13 @@ class WorkDay(object):
         self.uncertainPunchOutEndDatetime = uncertain_punch_out_end_datetime
 
     def get_plan_begin_datetime(self):
+        if self.planWork.get_begin_time() is None:
+            return None
         return get_date_time(self.workDate, self.planWork.get_begin_time())
 
     def get_plan_end_datetime(self):
+        if self.planWork.get_end_time() is None:
+            return None
         if self.planWork.is_across_day():
             return get_date_time(self.workDate + timedelta(days=1), self.planWork.get_end_time())
         else:
@@ -274,9 +278,13 @@ class RestDay(object):
         return self.plan.describe
 
     def get_plan_begin_datetime(self):
+        if self.plan.get_begin_time() is None:
+            return None
         return get_date_time(self.workDate, self.plan.get_begin_time())
 
     def get_plan_end_datetime(self):
+        if self.plan.get_end_time() is None:
+            return None
         return get_date_time(self.workDate, self.plan.get_end_time())
 
 
