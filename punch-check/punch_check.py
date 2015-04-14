@@ -18,6 +18,16 @@ print(encode_str('Copyright 2015 yijun.sun'))
 print(encode_str('Version: ' + CURRENT_VERSION))
 print('')
 
+
+def get_valid_part(name_string):
+    splits = name_string.split(' ')
+    name_string = splits[len(splits) - 1]
+    splits = name_string.split('（')
+    name_string = splits[0]
+    splits = name_string.split('(')
+    return splits[0].strip()
+
+
 try:
     result = request_to_github()
     if result:
@@ -56,8 +66,8 @@ try:
     notSetCode = []
     repeatedPerson = {}
     for row in range(planTablePersonStartRow, planSheet.nrows):
-        identity = read_str_cell(planSheet, row, planTableIdentityCol)
-        name = read_str_cell(planSheet, row, planTableNameCol)
+        identity = read_str_cell(planSheet, row, planTableIdentityCol).strip()
+        name = read_str_cell(planSheet, row, planTableNameCol).strip()
         department = read_str_cell(planSheet, row, planTableDepartmentCol).strip()
         planTimeMap = None
         if not useGlobalPan:
@@ -172,10 +182,8 @@ try:
             timeCellValid = False
             identity = read_str_cell(punchSheet, row, punchTableIdentityCol)
             name = read_str_cell(punchSheet, row, punchTableNameCol)
-            splits = identity.split(' ')
-            identity = splits[len(splits) - 1]
-            splits = name.split(' ')
-            name = splits[len(splits) - 1]
+            identity = get_valid_part(identity)
+            name = get_valid_part(name)
             department = read_str_cell(punchSheet, row, punchDepartmentCol)
             punchDatetime = None
             if punchSheetDatetimeNotSplit:
@@ -207,21 +215,24 @@ try:
                         identity) + '，排班表姓名：' + person.name + '，打卡表姓名：' + name))
             person.add_punch(Punch(punchType, punchDatetime))
     except Exception, e:
-        errColName = ''
-        splitMsgHint = ''
-        if punchSheetDatetimeNotSplit:
-            splitMsgHint = '合并'
+        if isinstance(e, SelfException):
+            raise e
         else:
-            splitMsgHint = '拆分'
-        if dateOrDatetimeCellValid:
-            errColName = '时间'
-        elif punchSheetDatetimeNotSplit:
-            errColName = '日期时间'
-        else:
-            errColName = '日期'
-        raise SelfException(
-            encode_str('打卡表采用日期时间' + splitMsgHint + '方式。第' + str(row + 1) + '行，' + errColName +
-                       '列 格式错误'))
+            errColName = ''
+            splitMsgHint = ''
+            if punchSheetDatetimeNotSplit:
+                splitMsgHint = '合并'
+            else:
+                splitMsgHint = '拆分'
+            if dateOrDatetimeCellValid:
+                errColName = '时间'
+            elif punchSheetDatetimeNotSplit:
+                errColName = '日期时间'
+            else:
+                errColName = '日期'
+            raise SelfException(
+                encode_str('打卡表采用日期时间' + splitMsgHint + '方式。第' + str(row + 1) + '行，' + errColName +
+                           '列 格式错误'))
 
     for person in personMap.values():
         person.punches = sorted(person.punches,
