@@ -31,7 +31,7 @@ def get_valid_part(name_string):
 try:
     result = request_to_github()
     if result:
-        print(encode_str('*** 如需更新软件，请运行update.exe ***'))
+        print(encode_str('*** 如需更新软件，请运行punch_update.exe ***'))
         print('')
 
     from configs import *
