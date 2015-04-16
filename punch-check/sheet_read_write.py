@@ -2,7 +2,7 @@
 
 __author__ = 'yijun.sun'
 
-from datetime import time, date
+from datetime import time, date, datetime
 
 import xlrd
 import xlwt
@@ -51,9 +51,40 @@ def read_time_cells(sheet, date_mode, time_row, time_col):
 
 
 def read_datetime_cells(sheet, date_mode, datetime_row, datetime_col):
-    return xlrd.xldate.xldate_as_datetime(sheet.cell(datetime_row, datetime_col).value,
-                                          date_mode)
+    if read_cell_type(sheet, datetime_row, datetime_col) is FLOAT_TYPE:
+        return xlrd.xldate.xldate_as_datetime(sheet.cell(datetime_row, datetime_col).value,
+                                              date_mode)
+    else:
+        datetime_str = read_str_cell(sheet, datetime_row, datetime_col)
+        date_time_str = datetime_str.split(' ')
+        if len(date_time_str) != 2:
+            raise Exception('datetime string not have two part.')
+        date_str = date_time_str[0]
+        time_str = date_time_str[1]
+        date_num = parse_str_to_date(date_str)
+        time_num = parse_str_to_time(time_str)
+        return datetime(date_num.year, date_num.month, date_num.day, time_num.hour, time_num.minute, time_num.second)
 
+
+def parse_str_to_date(date_str):
+    date_info_nums = None
+    if '-' in date_str:
+        date_info_nums = date_str.split('-')
+    elif '/' in date_str:
+        date_info_nums = date_str.split('/')
+    if date_info_nums and len(date_info_nums) == 3:
+        return date(int(date_info_nums[0]), int(date_info_nums[1]), int(date_info_nums[2]))
+    raise Exception('date string error: ' + date_str)
+
+
+def parse_str_to_time(time_str):
+    if ':' in time_str:
+        time_info_nums = time_str.split(':')
+        if len(time_info_nums) == 2:
+            return time(int(time_info_nums[0]), int(time_info_nums[1]))
+        elif len(time_info_nums) == 3:
+            return time(int(time_info_nums[0]), int(time_info_nums[1]), int(time_info_nums[2]))
+    raise Exception('date string error: ' + time_str)
 
 # 颜色表详见Style.py
 YELLOW_BG_PATTERN = xlwt.Pattern()
