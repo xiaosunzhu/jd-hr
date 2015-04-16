@@ -135,14 +135,12 @@ try:
         fromDateStr = raw_input(encode_str('排班起始日期为' + str(oneDate) + '，回车确认或输入起始日期：'))
         fromDate = oneDate
         if fromDateStr:
-            dateInfoNums = fromDateStr.split('-')
-            fromDate = date(int(dateInfoNums[0]), int(dateInfoNums[1]), int(dateInfoNums[2]))
+            fromDate = parse_str_to_date(fromDateStr)
 
         endDateStr = raw_input(encode_str('排班截止日期为' + str(lastDate) + '，回车确认或输入截止日期：'))
         endDate = lastDate
         if endDateStr:
-            dateInfoNums = endDateStr.split('-')
-            endDate = date(int(dateInfoNums[0]), int(dateInfoNums[1]), int(dateInfoNums[2]))
+            endDate = parse_str_to_date(endDateStr)
     except Exception, e:
         raise SelfException(encode_str('输入日期格式错误。格式为：年-月-日，如：2015-3-18'))
     print(encode_str('设定的处理时间段为：' + str(fromDate) + ' - ' + str(endDate)))
