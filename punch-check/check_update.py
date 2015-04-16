@@ -89,7 +89,7 @@ def update(file_name, download_url):
             if not os.path.isfile(file_name):
                 continue
             old_file_name = file[file.index('/') + 1:]
-            if old_file_name == 'update.exe' or old_file_name.endswith('.ini'):
+            if old_file_name == 'punch_update.exe' or old_file_name.endswith('.ini'):
                 continue
             if os.path.exists(old_file_name):
                 os.remove(old_file_name)
