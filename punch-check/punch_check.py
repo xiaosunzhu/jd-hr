@@ -38,13 +38,13 @@ try:
     from sheet_read_write import *
     from work_def import *
 
-    planFilePath = raw_input(encode_str('排班表：'))
-    punchFilePath = raw_input(encode_str('打卡表：'))
-    planFilePath = planFilePath.replace('"', "")
-    punchFilePath = punchFilePath.replace('"', "")
+    # planFilePath = raw_input(encode_str('排班表：'))
+    # punchFilePath = raw_input(encode_str('打卡表：'))
+    # planFilePath = planFilePath.replace('"', "")
+    # punchFilePath = punchFilePath.replace('"', "")
 
-    # planFilePath = encode_str('resources\\3月排班表_仓库.xlsx')
-    # punchFilePath = encode_str('resources\\3月指纹_仓库.xls')
+    planFilePath = encode_str('resources\\3月排班表_仓库.xlsx')
+    punchFilePath = encode_str('resources\\3月指纹_仓库.xls')
 
     startDateNum = 1
     dateCount = 0
@@ -380,7 +380,17 @@ try:
                         nextDayWork.remove_processed_uncertain_punch_in(
                             uncertainPunchOutFirstGroup.punchDatetime)
                         # 补充确定先前不确定的打卡记录
-
+            # 调整打卡确定是上班还是下班
+            if not work.have_punch_out() and work.have_punch_in():
+                if work.get_punch_in_datetime() > work.get_plan_begin_datetime() + timedelta(
+                        seconds=(work.get_plan_end_datetime() - work.get_plan_begin_datetime()).seconds / 2):
+                    work.punchOut = work.punchIn
+                    work.havePunchOut = True
+                    if work.get_punch_in_datetime() < work.get_plan_end_datetime():
+                        work.punchOutEarly = True
+                    work.havePunchIn = False
+                    work.punchIn = None
+                    work.punchInLate = False
             exceptionMsg = ''
             if work.needPunchIn and not work.have_punch_in() and 0 < index < (len(dates) - 1):
                 exceptionMsg += MSG_NOT_PUNCH_IN + ' / '
