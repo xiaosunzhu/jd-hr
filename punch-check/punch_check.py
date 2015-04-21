@@ -38,13 +38,13 @@ try:
     from sheet_read_write import *  # 需要先导入configs模块再导入sheet_read_write
     from work_def import *
 
-    # planFilePath = raw_input(encode_str('排班表：'))
-    # punchFilePath = raw_input(encode_str('打卡表：'))
-    # planFilePath = planFilePath.replace('"', "")
-    # punchFilePath = punchFilePath.replace('"', "")
+    planFilePath = raw_input(encode_str('排班表：'))
+    punchFilePath = raw_input(encode_str('打卡表：'))
+    planFilePath = planFilePath.replace('"', "")
+    punchFilePath = punchFilePath.replace('"', "")
 
-    planFilePath = encode_str('resources\\3月排班表_仓库.xlsx')
-    punchFilePath = encode_str('resources\\3月指纹_仓库.xls')
+    # planFilePath = encode_str('resources\\3月排班表_仓库.xlsx')
+    # punchFilePath = encode_str('resources\\3月指纹_仓库.xls')
 
     startDateNum = 1
     dateCount = 0
