@@ -498,8 +498,9 @@ try:
             if work.notPunchInRow and work.notPunchOutRow:  # 上下班均未打卡
                 write_final_sheet_bg(*(work.notPunchInRow, work.notPunchOutRow))
 
-        countOutputRow = write_count_sheet_row(countOutputRow, person.identity, person.name, person.department,
-                                               person.countMap)
+        if NEED_COUNT_CODE_MAP:
+            countOutputRow = write_count_sheet_row(countOutputRow, person.identity, person.name, person.department,
+                                                   person.countMap)
 
     try:
         outputData.save(encode_str('排班打卡比对_' + str(year) + '年' + str(month) + '月.xls'))

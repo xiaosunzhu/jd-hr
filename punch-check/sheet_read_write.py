@@ -347,25 +347,26 @@ outputDetailsSheet.write(0, 7, '排班')
 
 CountTypePlanColIndexMap = {}  # key-类别,value-排班次数列号
 
-outputCountSheet = outputData.add_sheet('统计')
-outputCountSheet.col(0).width = 256 * 12
-outputCountSheet.col(1).width = 256 * 12
-outputCountSheet.col(2).width = 256 * 18
-outputCountSheet.write_merge(0, 1, 0, 0, 'ERP')
-outputCountSheet.write_merge(0, 1, 1, 1, '姓名')
-outputCountSheet.write_merge(0, 1, 2, 2, '部门')
-col_index = 3
-origin_alignment_horz = style.alignment.horz
-style.alignment.horz = xlwt.Alignment.HORZ_CENTER_ACROSS_SEL
-for countType in NEED_COUNT_CODE_MAP.keys():
-    CountTypePlanColIndexMap[countType] = col_index
-    outputCountSheet.col(col_index).width = 256 * 12
-    outputCountSheet.col(col_index + 1).width = 256 * 12
-    outputCountSheet.write_merge(0, 0, col_index, col_index + 1, countType)
-    outputCountSheet.write(1, col_index, '排班次数')
-    outputCountSheet.write(1, col_index + 1, '实际打卡次数')
-    col_index += 2
-style.alignment.horz = origin_alignment_horz
+if NEED_COUNT_CODE_MAP:
+    outputCountSheet = outputData.add_sheet('统计')
+    outputCountSheet.col(0).width = 256 * 12
+    outputCountSheet.col(1).width = 256 * 12
+    outputCountSheet.col(2).width = 256 * 18
+    outputCountSheet.write_merge(0, 1, 0, 0, 'ERP')
+    outputCountSheet.write_merge(0, 1, 1, 1, '姓名')
+    outputCountSheet.write_merge(0, 1, 2, 2, '部门')
+    col_index = 3
+    origin_alignment_horz = style.alignment.horz
+    style.alignment.horz = xlwt.Alignment.HORZ_CENTER_ACROSS_SEL
+    for countType in NEED_COUNT_CODE_MAP.keys():
+        CountTypePlanColIndexMap[countType] = col_index
+        outputCountSheet.col(col_index).width = 256 * 12
+        outputCountSheet.col(col_index + 1).width = 256 * 12
+        outputCountSheet.write_merge(0, 0, col_index, col_index + 1, countType)
+        outputCountSheet.write(1, col_index, '排班次数')
+        outputCountSheet.write(1, col_index + 1, '实际打卡次数')
+        col_index += 2
+    style.alignment.horz = origin_alignment_horz
 
 outputNoPlanSheet = outputData.add_sheet('NotPlan')
 outputNoPlanSheet.col(0).width = 256 * 6
