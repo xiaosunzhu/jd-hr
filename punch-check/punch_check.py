@@ -35,7 +35,7 @@ try:
         print('')
 
     from configs import *
-    from sheet_read_write import *
+    from sheet_read_write import *  # 需要先导入configs模块再导入sheet_read_write
     from work_def import *
 
     # planFilePath = raw_input(encode_str('排班表：'))
@@ -160,6 +160,7 @@ try:
 
     detailsOutputRow = 1
     noPlanOutputRow = 1
+    countOutputRow = 2
 
     try:
         punchData = xlrd.open_workbook(punchFilePath)
@@ -410,18 +411,21 @@ try:
                                                        work.get_plan_begin_datetime(),
                                                        work.get_plan_end_datetime(),
                                                        MSG_NOT_PUNCH_BOTH, byDateOutputRow + 1)
-            elif work.notPunchInRow:
-                finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
-                                                       person.department,
-                                                       work.get_plan_begin_datetime(),
-                                                       work.get_plan_begin_datetime(),
-                                                       MSG_NOT_PUNCH, byDateOutputRow + 1)
-            elif work.notPunchOutRow:
-                finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
-                                                       person.department,
-                                                       work.get_plan_end_datetime(),
-                                                       work.get_plan_end_datetime(),
-                                                       MSG_NOT_PUNCH, byDateOutputRow + 1)
+            else:
+                if work.countType:
+                    person.countMap[work.countType][PERSON_COUNT_MAP_ARRAY_REAL_COUNT_INDEX] += 1
+                if work.notPunchInRow:
+                    finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
+                                                           person.department,
+                                                           work.get_plan_begin_datetime(),
+                                                           work.get_plan_begin_datetime(),
+                                                           MSG_NOT_PUNCH, byDateOutputRow + 1)
+                elif work.notPunchOutRow:
+                    finalOutputRow = write_final_sheet_row(finalOutputRow, person.identity, person.name,
+                                                           person.department,
+                                                           work.get_plan_end_datetime(),
+                                                           work.get_plan_end_datetime(),
+                                                           MSG_NOT_PUNCH, byDateOutputRow + 1)
             detailsStartRow = detailsOutputRow + 1
             detailsLocateRow = None
             if exceptionMsg:
@@ -493,6 +497,9 @@ try:
                 continue
             if work.notPunchInRow and work.notPunchOutRow:  # 上下班均未打卡
                 write_final_sheet_bg(*(work.notPunchInRow, work.notPunchOutRow))
+
+        countOutputRow = write_count_sheet_row(countOutputRow, person.identity, person.name, person.department,
+                                               person.countMap)
 
     try:
         outputData.save(encode_str('排班打卡比对_' + str(year) + '年' + str(month) + '月.xls'))

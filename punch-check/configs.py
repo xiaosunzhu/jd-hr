@@ -6,7 +6,7 @@ import ConfigParser
 from datetime import time
 
 from base import *
-from work_def import PlanType
+from work_def import *
 
 
 baseConfig = ConfigParser.ConfigParser()
@@ -22,7 +22,7 @@ try:
     startMonth = int(baseConfig.get(encode_str('Base'), encode_str('起始月')).strip())
     useGlobalPan = int(baseConfig.get(encode_str('Swtiches'), encode_str('全局排班')).strip())
     punchSheetDatetimeNotSplit = int(baseConfig.get(encode_str('Swtiches'),
-                                            encode_str('打卡日期时间不拆分')).strip())
+                                                    encode_str('打卡日期时间不拆分')).strip())
 except Exception, e:
     print(encode_str('数据配置格式非法！'))
     raise
@@ -56,8 +56,7 @@ except Exception, e:
 
 restPlanSection = '请假'
 globalPlanSection = 'Global'
-
-PLAN_DEPARTMENT_MAP = {}
+needCountSection = '统计'
 
 planCodeConfig = ConfigParser.ConfigParser()
 try:
@@ -69,6 +68,15 @@ except IOError, e:
 try:
     for department in planCodeConfig.sections():
         departmentDecode = department.decode('GBK').encode('utf-8')
+        if departmentDecode == needCountSection:
+            countTypes = planCodeConfig.items(department)
+            for countTypeConfig in countTypes:
+                type = countTypeConfig[0].upper().decode('GBK').encode('utf-8')
+                NEED_COUNT_CODE_MAP[type] = []
+                codes = countTypeConfig[1].decode('GBK').encode('utf-8').split(',')
+                for code in codes:
+                    NEED_COUNT_CODE_MAP[type].append(code.strip())
+            continue
         PLAN_DEPARTMENT_MAP[departmentDecode] = {}
         departmentConfig = planCodeConfig.items(department)
         for planConfig in departmentConfig:

@@ -2,13 +2,13 @@
 
 __author__ = 'yijun.sun'
 
-from datetime import time, date, datetime
+from datetime import time, date
 
 import xlrd
 import xlwt
 from xlwt import Style
 
-from work_def import STRING_TYPE, FLOAT_TYPE
+from work_def import *
 
 
 MSG_NOT_PUNCH = '未打卡'
@@ -229,6 +229,22 @@ def write_final_sheet_bg(*rows):
     style.pattern = origin_pattern
 
 
+def write_count_sheet_row(row, identity, name, department, count_map):
+    # count_map: key-类别，value-[],[0]-排班次数,[1]-实际次数
+    outputCountSheet.write(row, 0, identity)
+    outputCountSheet.write(row, 1, name)
+    outputCountSheet.write(row, 2, department)
+    for count_type in CountTypePlanColIndexMap.keys():
+        plan_count = 0
+        real_count = 0
+        if count_map.get(count_type):
+            plan_count = count_map[count_type][PERSON_COUNT_MAP_ARRAY_PLAN_COUNT_INDEX]
+            real_count = count_map[count_type][PERSON_COUNT_MAP_ARRAY_REAL_COUNT_INDEX]
+        outputCountSheet.write(row, CountTypePlanColIndexMap[count_type], plan_count)
+        outputCountSheet.write(row, CountTypePlanColIndexMap[count_type] + 1, real_count)
+    return row + 1
+
+
 def write_no_plan_sheet_row(row, identity, name, department, link_details_sheet_row):
     style = Style.default_style
     origin_pattern = style.pattern
@@ -312,7 +328,6 @@ outputByDateSheet.write(2, 9, '该背景表示排班可能不符')
 style.pattern = origin_pattern
 
 outputDetailsSheet = outputData.add_sheet('Details')
-# name, department, punch_datetime, punch_type,link_exception_sheet_row
 outputDetailsSheet.col(0).width = 256 * 12
 outputDetailsSheet.col(1).width = 256 * 12
 outputDetailsSheet.col(2).width = 256 * 18
@@ -329,6 +344,28 @@ outputDetailsSheet.write(0, 4, '打卡时间')
 outputDetailsSheet.write(0, 5, '记录状态')
 outputDetailsSheet.write(0, 6, '返回链接')
 outputDetailsSheet.write(0, 7, '排班')
+
+CountTypePlanColIndexMap = {}  # key-类别,value-排班次数列号
+
+outputCountSheet = outputData.add_sheet('统计')
+outputCountSheet.col(0).width = 256 * 12
+outputCountSheet.col(1).width = 256 * 12
+outputCountSheet.col(2).width = 256 * 18
+outputCountSheet.write_merge(0, 1, 0, 0, 'ERP')
+outputCountSheet.write_merge(0, 1, 1, 1, '姓名')
+outputCountSheet.write_merge(0, 1, 2, 2, '部门')
+col_index = 3
+origin_alignment_horz = style.alignment.horz
+style.alignment.horz = xlwt.Alignment.HORZ_CENTER_ACROSS_SEL
+for countType in NEED_COUNT_CODE_MAP.keys():
+    CountTypePlanColIndexMap[countType] = col_index
+    outputCountSheet.col(col_index).width = 256 * 12
+    outputCountSheet.col(col_index + 1).width = 256 * 12
+    outputCountSheet.write_merge(0, 0, col_index, col_index + 1, countType)
+    outputCountSheet.write(1, col_index, '排班次数')
+    outputCountSheet.write(1, col_index + 1, '实际打卡次数')
+    col_index += 2
+style.alignment.horz = origin_alignment_horz
 
 outputNoPlanSheet = outputData.add_sheet('NotPlan')
 outputNoPlanSheet.col(0).width = 256 * 6

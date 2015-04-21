@@ -49,6 +49,13 @@ NO_PLAN_UNCERTAIN_EXPAND_HOURS = 14
 PUNCH_TYPE_DIFF_MIN_HOUR = 3
 ONCE_PUNCH_DIFF_MAX_MINUTE = 50
 
+PERSON_COUNT_MAP_ARRAY_PLAN_COUNT_INDEX = 0
+PERSON_COUNT_MAP_ARRAY_REAL_COUNT_INDEX = 1
+
+PLAN_DEPARTMENT_MAP = {}
+
+NEED_COUNT_CODE_MAP = {}  # 需要统计次数的代码 key-统计类别，value-排班代码[]
+
 
 class Person(object):
     def __init__(self, identity, name, department):
@@ -59,12 +66,20 @@ class Person(object):
         self.restDays = {}  # Map(date,RestDay)
         self.punches = []  # Punch[]
         self.punchDatetimeCache = []  # datetime[]
+        self.countMap = {}  # 对配置的需要统计的类别的统计次数 key-类别，value-[],[0]-排班次数,[1]-实际次数
+        for countType in NEED_COUNT_CODE_MAP.keys():
+            self.countMap[countType] = [0, 0]
 
     def add_day_plan(self, day_plan):
         if isinstance(day_plan, RestDay):
             self.restDays[day_plan.workDate] = day_plan
         if isinstance(day_plan, WorkDay):
             self.workDays[day_plan.workDate] = day_plan
+            for countType in NEED_COUNT_CODE_MAP.keys():
+                if day_plan.get_plan_type().name in NEED_COUNT_CODE_MAP[countType]:
+                    self.countMap[countType][PERSON_COUNT_MAP_ARRAY_PLAN_COUNT_INDEX] += 1
+                    day_plan.countType = countType
+                    break
             yesterday = day_plan.workDate - timedelta(1)
             work_day_before = self.workDays.get(yesterday)
             current_begin = day_plan.get_plan_begin_datetime()
@@ -140,6 +155,7 @@ class WorkDay(object):
         self.uncertainPunchOutList = []
         self.notPunchInRow = None
         self.notPunchOutRow = None
+        self.countType = None  # 属于需要统计的哪一类，如果不需要统计，则为None
 
     def punch(self, punch):
         punch_datetime = punch.punchDatetime
