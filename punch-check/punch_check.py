@@ -86,7 +86,8 @@ try:
         colNum = planTableDateStartCol
         currentMonth = startMonth
         lastDateNum = 0
-        while read_cell_type(planSheet, planTableDateRow, colNum) is FLOAT_TYPE:
+        while len(planSheet.row(planTableDateRow)) > colNum and read_cell_type(planSheet, planTableDateRow,
+                                                                               colNum) is FLOAT_TYPE:
             dateTempNum = read_int_cell(planSheet, planTableDateRow, colNum)
             if lastDateNum > dateTempNum:
                 currentMonth += 1
@@ -368,11 +369,11 @@ try:
                                     <= (
                                             nextDayWork.get_plan_begin_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds) \
                         or (nextDayWork.is_punch_in_late() and (can_be_in_out_diff_datetime(
-                                work.uncertainPunchOutList[0].punchDatetime,
-                                nextDayWork.get_plan_begin_datetime())
+                            work.uncertainPunchOutList[0].punchDatetime,
+                            nextDayWork.get_plan_begin_datetime())
                                                                 and (
                                         is_same_time(nextDayWork.get_plan_begin_datetime(),
-                                                nextDayWork.get_punch_in_datetime()) or (
+                                                     nextDayWork.get_punch_in_datetime()) or (
                                                 uncertainPunchOutFirstGroup.punchDatetime - work.get_plan_end_datetime()).seconds
                                         <= (
                                                     nextDayWork.get_punch_in_datetime() - uncertainPunchOutFirstGroup.punchDatetime).seconds))):
@@ -400,7 +401,7 @@ try:
                 exceptionMsg += MSG_PUNCH_IN_LATE + ' / '
             if index < (len(dates) - 1) \
                     and work.validEndDatetime < get_date_time(endDate, time(
-                            6)) and work.needPunchOut and not work.have_punch_out():
+                        6)) and work.needPunchOut and not work.have_punch_out():
                 exceptionMsg += MSG_NOT_PUNCH_OUT + ' / '
                 work.notPunchOutRow = finalOutputRow
             elif work.needPunchOut and work.is_punch_out_early():
